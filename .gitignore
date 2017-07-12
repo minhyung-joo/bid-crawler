@@ -1,0 +1,9 @@
+# Leftover from development
+properties
+mylog*
+out
+build
+
+# IDE specific
+.idea
+.gradle
