@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    compile group: 'org.json', name: 'json', version: '20170516'
     compile group: 'org.apache.poi', name: 'poi', version: '3.16'
     compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1'
     compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'
