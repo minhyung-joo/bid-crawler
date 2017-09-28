@@ -151,7 +151,7 @@ public class NewLHParser extends Parser {
                 String[] segments = d.text().split(":");
                 String key = segments[0];
                 String value = segments[1].trim();
-                if (key.equals("ÀÔÂûž¶°šÀÏÀÚ")) {
+                if (key.equals("입찰마감일자")) {
                     value += ":" + segments[2];
                 }
                 info.put(key, value);
@@ -159,14 +159,14 @@ public class NewLHParser extends Parser {
 
             boolean exists = false;
             boolean enter = true;
-            String where = "WHERE °ø°í¹øÈ£=\"" + bidNum + "\"";
-            String sql = "SELECT EXISTS(SELECT °ø°í¹øÈ£ FROM lhbidinfo " + where + ")";
+            String where = "WHERE 공고번호=\"" + bidNum + "\"";
+            String sql = "SELECT EXISTS(SELECT 공고번호 FROM lhbidinfo " + where + ")";
             rs = st.executeQuery(sql);
             if (rs.first()) exists = rs.getBoolean(1);
 
             if (exists) {
                 System.out.println(bidNum + " exists.");
-                sql = "SELECT °ø°í, °ø°íÇöÈ² FROM lhbidinfo " + where;
+                sql = "SELECT 공고, 공고현황 FROM lhbidinfo " + where;
                 rs = st.executeQuery(sql);
                 int finished = 0;
                 String dbProg = "";
@@ -175,22 +175,22 @@ public class NewLHParser extends Parser {
                     dbProg = rs.getString(2) == null ? "" : rs.getString(2);
                 }
                 if (finished > 0) {
-                    if (dbProg.equals(info.get("ÁøÇà»óÅÂ"))) enter = false;
+                    if (dbProg.equals(info.get("진행상태"))) enter = false;
                     else {
-                        sql = "UPDATE lhbidinfo SET °ø°íÇöÈ²=\"" + info.get("ÁøÇà»óÅÂ") + "\" " + where;
+                        sql = "UPDATE lhbidinfo SET 공고현황=\"" + info.get("진행상태") + "\" " + where;
                         st.executeUpdate(sql);
                     }
                 }
             }
             else {
-                sql = "INSERT INTO lhbidinfo (°ø°í¹øÈ£, Ÿ÷¹«, ºÐ·ù, °èŸà¹æ¹ý, ÀÔÂûž¶°šÀÏÀÚ, Áö¿ªº»ºÎ, °ø°íÇöÈ²) VALUES (" +
+                sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 계약방법, 입찰마감일자, 지역본부, 공고현황) VALUES (" +
                         "\"" + bidNum + "\", " +
-                        "\"" + info.get("Ÿ÷¹«") + "\", " +
-                        "\"" + info.get("ºÐ·ù") + "\", " +
-                        "\"" + info.get("°èŸà¹æ¹ý") + "\", " +
-                        "\"" + info.get("ÀÔÂûž¶°šÀÏÀÚ") + "\", " +
-                        "\"" + info.get("Áö¿ªº»ºÎ") + "\", " +
-                        "\"" + info.get("ÁøÇà»óÅÂ") + "\");";
+                        "\"" + info.get("업무") + "\", " +
+                        "\"" + info.get("분류") + "\", " +
+                        "\"" + info.get("계약방법") + "\", " +
+                        "\"" + info.get("입찰마감일자") + "\", " +
+                        "\"" + info.get("지역본부") + "\", " +
+                        "\"" + info.get("진행상태") + "\");";
                 System.out.println(sql);
                 st.executeUpdate(sql);
             }
@@ -242,36 +242,36 @@ public class NewLHParser extends Parser {
             String key = h.text();
             if (h.nextElementSibling() == null) continue;
             String value = h.nextElementSibling().text();
-            if (key.equals("¿ë¿ªÀ¯Çü") || key.equals("°ø»çÁŸ·ù")) {
-                key = "Ÿ÷ÁŸÀ¯Çü";
+            if (key.equals("용역유형") || key.equals("공사종류")) {
+                key = "업종유형";
             }
-            else if (key.equals("°³ÂûÀÏœÃ")) {
+            else if (key.equals("개찰일시")) {
                 value += ":00";
             }
-            else if (key.equals("±âÃÊ±ÝŸ×")) {
+            else if (key.equals("기초금액")) {
                 value = value.split(" ")[0];
                 value = value.replaceAll(",", "");
-                value = value.replaceAll("¿ø", "");
+                value = value.replaceAll("원", "");
                 if (!Util.isInteger(value)) value = "0";
                 hasBase = true;
             }
-            else if (key.equals("Œ³°è°¡°Ý")) {
+            else if (key.equals("설계가격")) {
                 value = value.split(" ")[0];
                 value = value.replaceAll(",", "");
-                value = value.replaceAll("¿ø", "");
+                value = value.replaceAll("원", "");
                 if (!Util.isInteger(value)) value = "0";
             }
             info.put(key, value);
         }
-        String sql = "UPDATE lhbidinfo SET Ÿ÷ÁŸÀ¯Çü=\"" + info.get("Ÿ÷ÁŸÀ¯Çü") + "\", "
-                + "ÀÔÂû¹æ¹ý=\"" + info.get("ÀÔÂû¹æ¹ý") + "\", "
-                + "ÀÔÂû¹æœÄ=\"" + info.get("ÀÔÂû¹æœÄ") + "\", "
-                + "³«ÂûÀÚŒ±Á€¹æ¹ý=\"" + info.get("³«ÂûÀÚŒ±Á€¹æ¹ý") + "\", "
-                + "ÀçÀÔÂû=\"ÀçÀÔÂû ŸøÀœ\", "
-                + "°³ÂûÀÏœÃ=\"" + info.get("°³ÂûÀÏœÃ") + "\", ";
-        if (hasBase) sql += "±âÃÊ±ÝŸ×=" + info.get("±âÃÊ±ÝŸ×") + ", ";
-        else sql += "±âÃÊ±ÝŸ×=" + info.get("Œ³°è°¡°Ý") + ", ";
-        sql += "°ø°í=1 " + where;
+        String sql = "UPDATE lhbidinfo SET 업종유형=\"" + info.get("업종유형") + "\", "
+                + "입찰방법=\"" + info.get("입찰방법") + "\", "
+                + "입찰방식=\"" + info.get("입찰방식") + "\", "
+                + "낙찰자선정방법=\"" + info.get("낙찰자선정방법") + "\", "
+                + "재입찰=\"재입찰 없음\", "
+                + "개찰일시=\"" + info.get("개찰일시") + "\", ";
+        if (hasBase) sql += "기초금액=" + info.get("기초금액") + ", ";
+        else sql += "기초금액=" + info.get("설계가격") + ", ";
+        sql += "공고=1 " + where;
 
         System.out.println(sql);
         st.executeUpdate(sql);
@@ -319,20 +319,20 @@ public class NewLHParser extends Parser {
                 String[] segments = d.text().split(":");
                 String key = segments[0];
                 String value = segments[1].trim();
-                if (key.equals("°³Âûž¶°šÀÏœÃ")) {
+                if (key.equals("개찰마감일시")) {
                     value += ":" + segments[2];
                 }
                 System.out.println(key + " : " + value);
                 info.put(key, value);
             }
 
-            String where = "WHERE °ø°í¹øÈ£=\"" + bidNum + "\"";
+            String where = "WHERE 공고번호=\"" + bidNum + "\"";
 
-            rs = st.executeQuery("SELECT EXISTS(SELECT °ø°í¹øÈ£ FROM lhbidinfo " + where + ")");
+            rs = st.executeQuery("SELECT EXISTS(SELECT 공고번호 FROM lhbidinfo " + where + ")");
             if (rs.first()) exists = rs.getBoolean(1);
 
             if (exists) {
-                rs = st.executeQuery("SELECT ¿Ï·á, °³Âû³»¿ª FROM lhbidinfo " + where);
+                rs = st.executeQuery("SELECT 완료, 개찰내역 FROM lhbidinfo " + where);
                 int finished = 0;
                 String dbResult = "";
                 if (rs.first()) {
@@ -341,24 +341,24 @@ public class NewLHParser extends Parser {
                 }
                 if (finished > 0) {
                     System.out.println(bidNum + " exists and " + dbResult);
-                    if (dbResult.equals(info.get("°³Âû³»¿ª")))	enter = false;
+                    if (dbResult.equals(info.get("개찰내역")))	enter = false;
                     else {
-                        String sql = "UPDATE lhbidinfo SET °³Âû³»¿ª=\"" + info.get("°³Âû³»¿ª") + "\" " + where;
+                        String sql = "UPDATE lhbidinfo SET 개찰내역=\"" + info.get("개찰내역") + "\" " + where;
                         st.executeUpdate(sql);
                     }
                 }
             }
             else {
-                String sql = "INSERT INTO lhbidinfo (°ø°í¹øÈ£, Ÿ÷¹«, ºÐ·ù, °³ÂûÀÏœÃ, °³Âû³»¿ª) VALUES (" +
+                String sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 개찰일시, 개찰내역) VALUES (" +
                         "\"" + bidNum + "\", " +
-                        "\"" + info.get("Ÿ÷¹«±žºÐ") + "\", " +
-                        "\"" + info.get("ºÐ·ù") + "\", " +
-                        "\"" + info.get("°³Âûž¶°šÀÏœÃ") + "\", " +
-                        "\"" + info.get("°³Âû³»¿ª") + "\");";
+                        "\"" + info.get("업무구분") + "\", " +
+                        "\"" + info.get("분류") + "\", " +
+                        "\"" + info.get("개찰마감일시") + "\", " +
+                        "\"" + info.get("개찰내역") + "\");";
                 System.out.println(sql);
                 st.executeUpdate(sql);
-                if (info.get("°³Âû³»¿ª").equals("À¯Âû") || info.get("°³Âû³»¿ª").equals("ºñ°ø°³")) {
-                    st.executeUpdate("UPDATE lhbidinfo SET ¿Ï·á=1 " + where);
+                if (info.get("개찰내역").equals("À¯Âû") || info.get("개찰내역").equals("비공개")) {
+                    st.executeUpdate("UPDATE lhbidinfo SET 완료=1 " + where);
                     enter = false;
                 }
             }
@@ -367,15 +367,15 @@ public class NewLHParser extends Parser {
                 String itemPath = "";
                 String type = "";
                 if (tndrCtrctMedCd.equals("70")){
-                    itemPath = NewLHParser.NEGO_RES; //Çù»ó¿¡ÀÇÇÑ°èŸà
+                    itemPath = NewLHParser.NEGO_RES; //협상에의한계약
                     type = NewLHParser.NEGO_RES;
                 }
                 else if (tndrCtrctMedCd.equals("90")) {
-                    itemPath = NewLHParser.TECH_RES; //±âŒú°¡°ÝºÐž®ÀÔÂû
+                    itemPath = NewLHParser.TECH_RES; //기술가격분리입찰
                     type = NewLHParser.TECH_RES;
                 }
                 else {
-                    itemPath = NewLHParser.NORMAL_RES; //ÀÏ¹Ý
+                    itemPath = NewLHParser.NORMAL_RES; //일반
                     type = NewLHParser.NORMAL_RES;
                 }
 
@@ -419,11 +419,17 @@ public class NewLHParser extends Parser {
         for (Element d : data) {
             String key = d.text();
             String value = d.nextElementSibling().text().trim();
-            if (key.equals("Œ³°è°¡°Ý") || key.equals("±âÃÊ±ÝŸ×") || key.equals("¿¹Á€°¡°Ý")) {
+            if (key.equals("설계가격") || key.equals("기초금액") || key.equals("예정가격") || key.equals("공사예산금액")) {
                 value = value.split(" ")[0];
                 value = value.replaceAll(",", "");
-                value = value.replaceAll("¿ø", "");
-                if (!Util.isInteger(value)) value = "0";
+                value = value.replaceAll("원", "");
+                if (!Util.isInteger(value)) {
+                    value = "0";
+                }
+
+                if (key.equals("공사예산금액")) {
+                    key = "예정가격";
+                }
             }
             info.put(key, value);
         }
@@ -454,11 +460,11 @@ public class NewLHParser extends Parser {
             StringBuilder sb = new StringBuilder();
             sb.append("UPDATE lhbidinfo SET ");
             for (int i = 1; i <= dupPrices.size(); i++) {
-                sb.append("º¹Œö" + i + "=" + dupPrices.get(i-1) + ", º¹Âü" + i + "=" + dupCounts.get(i-1) + ", ");
+                sb.append("복수" + i + "=" + dupPrices.get(i-1) + ", 복참" + i + "=" + dupCounts.get(i-1) + ", ");
                 companies += Integer.parseInt(dupCounts.get(i-1));
             }
             for (int i = 1; i <= chosen.size(); i++) {
-                sb.append("Œ±ÅÃ°¡°Ý" + i + "=" + chosen.get(i-1) + ", ");
+                sb.append("선택가격" + i + "=" + chosen.get(i-1) + ", ");
                 expPrice += Long.parseLong(chosen.get(i-1));
             }
             if ( (expPrice % 4) > 0 ) {
@@ -466,7 +472,7 @@ public class NewLHParser extends Parser {
             }
             else expPrice = expPrice / 4;
             companies = companies / 2;
-            sb.append("Âü°¡Œö=" + companies + ", ¿¹Á€±ÝŸ×=" + expPrice + " " + where);
+            sb.append("참가수=" + companies + ", 예정금액=" + expPrice + " " + where);
 
             String sql = sb.toString();
             System.out.println(sql);
@@ -478,11 +484,15 @@ public class NewLHParser extends Parser {
 
             for (Element list : lists) {
                 Elements listData = list.getElementsByTag("li");
+                if (listData.size() < 7) {
+                    break;
+                }
+
                 if (type.equals(NewLHParser.NORMAL_RES)) {
-                    if (!listData.get(6).text().contains("³«ÂûÇÏÇÑÀ²¹Ìžž")) {
+                    if (!listData.get(6).text().contains("낙찰하한율미만")) {
                         String bidPrice = listData.get(3).text().split(":")[1].trim();
                         bidPrice = bidPrice.replaceAll(",", "");
-                        String sql = "UPDATE lhbidinfo SET ÅõÂû±ÝŸ×=" + bidPrice + " " + where;
+                        String sql = "UPDATE lhbidinfo SET 투찰금액=" + bidPrice + " " + where;
                         System.out.println(sql);
                         st.executeUpdate(sql);
                         break;
@@ -491,7 +501,7 @@ public class NewLHParser extends Parser {
                 else {
                     String bidPrice = listData.get(4).text().split(":")[1].trim();
                     bidPrice = bidPrice.replaceAll(",", "");
-                    String sql = "UPDATE lhbidinfo SET ÅõÂû±ÝŸ×=" + bidPrice + " " + where;
+                    String sql = "UPDATE lhbidinfo SET 투찰금액=" + bidPrice + " " + where;
                     System.out.println(sql);
                     st.executeUpdate(sql);
                     break;
@@ -499,16 +509,19 @@ public class NewLHParser extends Parser {
             }
         }
 
-        String sql = "UPDATE lhbidinfo SET ±âÃÊ±ÝŸ×=" + info.get("±âÃÊ±ÝŸ×") + ", ±âÁž¿¹Á€°¡°Ý=" + info.get("¿¹Á€°¡°Ý") + ", ¿Ï·á=1 " + where;
+        String sql = "UPDATE lhbidinfo SET ";
+        if (info.containsKey("기초금액")) sql += "기초금액=" + info.get("기초금액") + ", ";
+        if (info.containsKey("예정가격")) sql += "기존예정가격=" + info.get("예정가격") + ", ";
+        sql += "완료=1 " + where;
         System.out.println(sql);
         st.executeUpdate(sql);
     }
 
     public void run() {
         try {
-            setOption("°ø°í");
+            setOption("공고");
             if (!shutdown) getNoti();
-            setOption("°á°ú");
+            setOption("결과");
             if (!shutdown) getRes();
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());

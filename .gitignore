@@ -1,9 +1,12 @@
 # Leftover from development
+classes
 properties
 mylog*
 out
 build
+META-INF
 
 # IDE specific
 .idea
 .gradle
+bid-crawler.iml
