@@ -357,7 +357,7 @@ public class NewLHParser extends Parser {
                         "\"" + info.get("개찰내역") + "\");";
                 System.out.println(sql);
                 st.executeUpdate(sql);
-                if (info.get("개찰내역").equals("À¯Âû") || info.get("개찰내역").equals("비공개")) {
+                if (info.get("개찰내역").equals("유찰") || info.get("개찰내역").equals("비공개")) {
                     st.executeUpdate("UPDATE lhbidinfo SET 완료=1 " + where);
                     enter = false;
                 }
@@ -463,7 +463,7 @@ public class NewLHParser extends Parser {
                 sb.append("복수" + i + "=" + dupPrices.get(i-1) + ", 복참" + i + "=" + dupCounts.get(i-1) + ", ");
                 companies += Integer.parseInt(dupCounts.get(i-1));
             }
-            for (int i = 1; i <= chosen.size(); i++) {
+            for (int i = 1; i <= chosen.size() && i <= 4; i++) {
                 sb.append("선택가격" + i + "=" + chosen.get(i-1) + ", ");
                 expPrice += Long.parseLong(chosen.get(i-1));
             }
