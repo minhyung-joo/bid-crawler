@@ -240,11 +240,12 @@ public class NegoPanel extends JPanel {
         private class NegoSearchListener implements ActionListener {
             public void actionPerformed(ActionEvent e) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String sd = null;
                 String ed = null;
                 String lowerBound = null;
                 String upperBound = null;
-                String today = sdf.format(new Date()) + " 00:00:00";
+                String today = todayFormat.format(new Date());
 
                 if (dateCheck.isSelected()) {
                     if ((startDate.getModel().getValue() != null) && (endDate.getModel().getValue() != null)) {

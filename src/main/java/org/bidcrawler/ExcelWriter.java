@@ -62,7 +62,8 @@ public class ExcelWriter {
         HSSFDataFormat moneyFormat = (HSSFDataFormat) workbook.createDataFormat();
         money.setDataFormat(moneyFormat.getFormat(BuiltinFormats.getBuiltinFormat(42)));
         sdf = new SimpleDateFormat("yyyy-MM-dd");
-        today = sdf.format(new Date()) + " 00:00:00";
+        SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        today = todayFormat.format(new Date());
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
