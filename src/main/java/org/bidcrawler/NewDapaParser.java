@@ -25,15 +25,23 @@ import java.util.List;
  */
 public class NewDapaParser extends Parser {
     public static final String PROD_ANN_LIST = "http://www.d2b.go.kr/pdb/bid/getGoodsBidAnnounceListNew.json";
-    public static final String PROD_ANN_VIEW = "http://www.d2b.go.kr/pdb/bid/bidAnnounceView.do";
-    public static final String PROD_NEGO_ANN = "http://www.d2b.go.kr/pdb/openNego/openNegoPlanView.do";
+    public static final String BID_ANN_VIEW = "http://www.d2b.go.kr/pdb/bid/bidAnnounceView.do";
+    public static final String NEGO_ANN_VIEW = "http://www.d2b.go.kr/pdb/openNego/openNegoPlanView.do";
     public static final String PROD_BID_RES = "http://www.d2b.go.kr/pdb/bid/getBidResultList.json";
     public static final String PROD_NEGO_RES = "http://www.d2b.go.kr/pdb/openNego/openNegoResultView.do";
     public static final String PROD_RES_VIEW = "http://www.d2b.go.kr/pdb/bid/bidResultView.do";
-    public static final String SERV_BID_ANN = "http://www.d2b.go.kr/psb/bid/getServiceBidAnnounceListNew.json";
-    public static final String SERV_BID_RES = "http://www.d2b.go.kr/psb/bid/serviceBidResultList.do?key=608";
-    public static final String FACIL_BID_ANN = "http://www.d2b.go.kr/peb/bid/announceList.do?key=541";
-    public static final String FACIL_BID_RES = "http://www.d2b.go.kr/peb/bid/bidResultList.do?key=545";
+    public static final String PROD_ORG_LIST = "http://www.d2b.go.kr/pdb/bid/getBidRecordList.json";
+    public static final String PROD_NEGO_ORG = "http://www.d2b.go.kr/pdb/openNego/getMnufResultList.json";
+    public static final String SERV_ANN_LIST = "http://www.d2b.go.kr/psb/bid/getServiceBidAnnounceListNew.json";
+    public static final String SERV_BID_RES = "http://www.d2b.go.kr/psb/bid/getBidResultList.json";
+    public static final String FACIL_ANN_LIST = "http://www.d2b.go.kr/peb/bid/getAnnounceList.json";
+    public static final String FACIL_NEGO_ANN = "http://www.d2b.go.kr/peb/openNego/openNegoPlanView.do";
+    public static final String FACIL_BID_ANN = "http://www.d2b.go.kr/peb/bid/announceView.do";
+    public static final String FACIL_BID_RES = "http://www.d2b.go.kr/peb/bid/getBidResultList.json";
+    public static final String FACIL_RES_VIEW = "http://www.d2b.go.kr/peb/bid/bidResultView.do";
+    public static final String FACIL_NEGO_RES = "http://www.d2b.go.kr/peb/openNego/openNegoResultView.do";
+    public static final String FACIL_ORG_LIST = "http://www.d2b.go.kr/peb/bid/getBidRecordList.json";
+    public static final String FACIL_NEGO_ORG = "http://www.d2b.go.kr/peb/openNego/getMnufResultList.json";
 
     private class DapaEntry {
         HashMap bidInfo;
@@ -60,8 +68,7 @@ public class NewDapaParser extends Parser {
     private GetFrame frame;
 
     public static void main(String[] args) {
-        NewDapaParser parser = new NewDapaParser("20170701", "20170710", "PROD");
-
+        NewDapaParser parser = new NewDapaParser("20180101", "20180120", "FACIL");
         try {
             parser.parseBidData();
         } catch (IOException e) {
@@ -109,49 +116,49 @@ public class NewDapaParser extends Parser {
     }
 
     public void parseBidData() throws IOException {
-        parseAnnouncementData();
         parseResultData();
+        parseAnnouncementData();
     }
 
     private void parseAnnouncementData() throws IOException {
-        getAnnouncementList();
-    }
-
-    private void parseResultData() {
-
-    }
-
-    private void getAnnouncementList() throws IOException {
+        String path = "";
         switch (option) {
             case "PROD":
-                getProductAnnouncementList();
+                path = NewDapaParser.PROD_ANN_LIST;
+                break;
+            case "FACIL":
+                path = NewDapaParser.FACIL_ANN_LIST;
+                break;
+            case "SERV":
+                path = NewDapaParser.SERV_ANN_LIST;
                 break;
             default:
                 break;
         }
-    }
 
-    private void getProductAnnouncementList() throws IOException {
-        String path = NewDapaParser.PROD_ANN_LIST;
         openHttpConnection(path);
         int page = 1;
         String param = "date_divs=1&date_from=" + startDate + "&date_to=" + endDate + "&numb_divs=1&exct_divs=B&currentPageNo=" + page;
         Document doc = Jsoup.parse(getResponse(param));
 
-        System.out.println(doc.body().text());
+        System.out.println(doc.html());
 
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray dataArray = jsonData.getJSONArray("list");
-        totalItems = jsonData.getInt("totlCnt");
+        if (option.equals("SERV")) {
+            totalItems = jsonData.getInt("totalCount");
+        } else {
+            totalItems = jsonData.getInt("totlCnt");
+        }
         List bidEntries = getBidEntriesFromJsonArray(dataArray);
         while (!bidEntries.isEmpty()) {
             for (Object entry : bidEntries) {
                 JSONObject jsonEntry = (JSONObject) entry;
                 DapaEntry annEntry = new DapaEntry(jsonEntry);
                 if (annEntry.bidInfo.get("lv2Divs").equals("2")) {
-                    parseProdNegoAnnEntry(annEntry);
+                    parseNegoAnnEntry(annEntry);
                 } else {
-                    parseProdBidAnnEntry(annEntry);
+                    parseBidAnnEntry(annEntry);
                 }
             }
 
@@ -177,8 +184,34 @@ public class NewDapaParser extends Parser {
         return entries;
     }
 
-    private void parseProdBidAnnEntry(DapaEntry entry) throws IOException {
-        String path = NewDapaParser.PROD_ANN_VIEW;
+    private void parseBidAnnEntry(DapaEntry entry) throws IOException {
+        Document doc = Jsoup.parse(getAnnDetails(entry));
+
+        /*
+         * Getting the announcement details, including 공고번호, 개찰일시, and 기초예가
+         */
+        Elements infoDivs = doc.getElementsByAttributeValue("summary", "상세테이블");
+        if (!infoDivs.isEmpty()) {
+            for (Element infoDiv : infoDivs) {
+                Elements headers = infoDiv.getElementsByTag("th");
+                for (Element header : headers) {
+                    System.out.println(header.nextElementSibling().text());
+                }
+            }
+        } else {
+            System.out.println(doc.html());
+        }
+
+        String person = parseContactInfo(doc);
+        System.out.println(person);
+    }
+
+    private String getAnnDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.BID_ANN_VIEW;
+        if (entry.bidInfo.get("lv1Divs").equals("PEB")) {
+            path = NewDapaParser.FACIL_BID_ANN;
+        }
+
         openHttpConnection(path);
         StringBuilder paramBuilder = new StringBuilder();
         paramBuilder.append("dprt_code="+entry.bidInfo.get("dprtCode"));
@@ -190,54 +223,22 @@ public class NewDapaParser extends Parser {
         paramBuilder.append("&bsic_stat="+entry.bidInfo.get("bsicStat"));
         paramBuilder.append("&anmt_date="+entry.bidInfo.get("anmtDate"));
         paramBuilder.append("&lv2Divs="+entry.bidInfo.get("lv2Divs"));
-        paramBuilder.append("&pageDivs=G1&bid_divs=bid");
-        paramBuilder.append("&searchData={");
-        paramBuilder.append("\"date_divs\":\"1\",");
-        paramBuilder.append("\"date_from\":\"" + startDate + "\",");
-        paramBuilder.append("\"date_to\":\"" + endDate + "\",");
-        paramBuilder.append("\"search_divs\":\"\",");
-        paramBuilder.append("\"anmt_divs\":\"\",");
-        paramBuilder.append("\"dprt_name\":\"\",");
-        paramBuilder.append("\"dprt_code\":\"\",");
-        paramBuilder.append("\"edix_gtag\":\"\",");
-        paramBuilder.append("\"anmt_name\":\"\",");
-        paramBuilder.append("\"search_numb\":\"\",");
-        paramBuilder.append("\"currentPageNo\":\"1\",");
-        paramBuilder.append("\"numb_divs\":\"1\",");
-        paramBuilder.append("\"exct_divs\":\"B\"");
-        paramBuilder.append("}");
+        paramBuilder.append("&lv1Divs="+entry.bidInfo.get("lv1Divs"));
+        paramBuilder.append("&csrt_numb="+entry.bidInfo.get("dcsnNumb"));
+        if (option.equals("FACIL")) {
+            paramBuilder.append("&pageDivs=E1&bid_divs=bid");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&pageDivs=S1&exct_divs=A");
+        } else {
+            paramBuilder.append("&pageDivs=G1&bid_divs=bid");
+        }
 
         String param = paramBuilder.toString();
-        Document doc = Jsoup.parse(getResponse(param));
-        Element infoDiv = doc.getElementsByClass("post").first();
-        if (infoDiv != null) {
-            System.out.println(infoDiv.html());
-            Elements headers = infoDiv.getElementsByTag("th");
-            if (headers != null) {
-                for (Element header : headers) {
-                    //System.out.println(header.text());
-                }
-            }
-        } else {
-            System.out.println(doc.html());
-        }
+        return getResponse(param);
     }
 
-    private void parseProdNegoAnnEntry(DapaEntry entry) throws IOException {
-        String path = NewDapaParser.PROD_NEGO_ANN;
-        openHttpConnection(path);
-        StringBuilder paramBuilder = new StringBuilder();
-        paramBuilder.append("dmst_itnb=***");
-        paramBuilder.append("&dcsn_numb=" + entry.bidInfo.get("dcsnNumb"));
-        paramBuilder.append("&negn_pldt=" + entry.bidInfo.get("negnCldt"));
-        paramBuilder.append("&dprt_code=" + entry.bidInfo.get("dprtCode"));
-        paramBuilder.append("&ordr_year=" + entry.bidInfo.get("rqstYear"));
-        paramBuilder.append("&negn_degr=" + entry.bidInfo.get("rqstDegr"));
-        paramBuilder.append("&anmt_numb=" + entry.bidInfo.get("anmtNumb"));
-        paramBuilder.append("&pageDivs=G&list_url=%2Fpdb%2Fbid%2FgoodsBidAnnounceList.do");
-
-        String param = paramBuilder.toString();
-        Document doc = Jsoup.parse(getResponse(param));
+    private void parseNegoAnnEntry(DapaEntry entry) throws IOException {
+        Document doc = Jsoup.parse(getNegoAnnDetails(entry));
         Element infoDiv = doc.getElementsByClass("post").first();
         if (infoDiv != null) {
             Element infoTable = infoDiv.getElementsByAttributeValue("summary", "상세테이블").first();
@@ -246,24 +247,343 @@ public class NewDapaParser extends Parser {
                 Element data = header.nextElementSibling();
                 System.out.println(data.text());
             }
-            Element miscTable = infoDiv.getElementsByAttributeValue("summary", "목록테이블").first();
-            Elements miscBodies = miscTable.getElementsByTag("tbody");
+        } else {
+            System.out.println(doc.html());
+        }
 
+        String person = parseContactInfo(doc);
+        System.out.println(person);
+    }
+
+    private String getNegoAnnDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.NEGO_ANN_VIEW;
+        if (entry.bidInfo.get("lv1Divs").equals("PEB")) {
+            path = NewDapaParser.FACIL_NEGO_ANN;
+        }
+
+        openHttpConnection(path);
+        StringBuilder paramBuilder = new StringBuilder();
+        paramBuilder.append("dmst_itnb=");
+        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
+            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        } else {
+            paramBuilder.append("***");
+        }
+
+        if (option.equals("FACIL")) {
+            paramBuilder.append("&csrt_numb=" + entry.bidInfo.get("dcsnNumb"));
+            paramBuilder.append("&pageDivs=E&list_url=%2Fpeb%2Fbid%2FannounceList.do");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&dcsn_numb=" + entry.bidInfo.get("dcsnNumb"));
+            paramBuilder.append("&csrt_numb=" + entry.bidInfo.get("dcsnNumb"));
+            paramBuilder.append("&pageDivs=S&list_url=%2Fpsb%2Fbid%2FserviceBidAnnounceList.do");
+        } else {
+            paramBuilder.append("&dcsn_numb=" + entry.bidInfo.get("dcsnNumb"));
+            paramBuilder.append("&pageDivs=G&list_url=%2Fpdb%2Fbid%2FgoodsBidAnnounceList.do");
+        }
+
+        paramBuilder.append("&negn_cldt=" + entry.bidInfo.get("negnCldt"));
+        paramBuilder.append("&negn_pldt=" + entry.bidInfo.get("negnCldt"));
+        paramBuilder.append("&dprt_code=" + entry.bidInfo.get("dprtCode"));
+        paramBuilder.append("&ordr_year=" + entry.bidInfo.get("rqstYear"));
+        paramBuilder.append("&negn_degr=" + entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_numb=" + entry.bidInfo.get("anmtNumb"));
+        paramBuilder.append("&lv1Divs=" + entry.bidInfo.get("lv1Divs"));
+
+        String param = paramBuilder.toString();
+        return getResponse(param);
+    }
+
+    private String parseContactInfo(Document doc) {
+        Element label = null;
+        Elements candidates = doc.getElementsContainingOwnText("문의처");
+        for (Element candidate : candidates) {
+            if (candidate.text().equals("문의처")) {
+                label = candidate;
+            }
+        }
+
+        if (label != null) {
+            Element contactDiv = label.nextElementSibling();
+            Elements contactData = contactDiv.getElementsByTag("td");
+            return contactData.get(1).text();
+        }
+
+        return "";
+    }
+
+    private void parseResultData() throws IOException {
+        String path = "";
+        switch (option) {
+            case "PROD":
+                path = NewDapaParser.PROD_BID_RES;
+                break;
+            case "FACIL":
+                path = NewDapaParser.FACIL_BID_RES;
+                break;
+            case "SERV":
+                path = NewDapaParser.SERV_BID_RES;
+                break;
+            default:
+                break;
+        }
+
+        openHttpConnection(path);
+        int page = 1;
+        String param = "from_date=" + startDate + "&to_date=" + endDate + "&chkMy=1";
+        Document doc = Jsoup.parse(getResponse(param));
+
+        System.out.println(doc.html());
+
+        JSONObject jsonData = new JSONObject(doc.body().text());
+        JSONArray dataArray = jsonData.getJSONArray("list");
+        totalItems = jsonData.getInt("totlCnt");
+        List bidEntries = getBidEntriesFromJsonArray(dataArray);
+        while (!bidEntries.isEmpty()) {
+            for (Object entry : bidEntries) {
+                JSONObject jsonEntry = (JSONObject) entry;
+                DapaEntry annEntry = new DapaEntry(jsonEntry);
+                if (annEntry.bidInfo.get("lvDivs2").equals("BID")) {
+                    parseBidResEntry(annEntry);
+                } else {
+                    parseNegoResEntry(annEntry);
+                }
+            }
+
+            // Get new page
+            page++;
+            param = "from_date=" + startDate + "&to_date=" + endDate + "&chkMy=1&currentPageNo=" + page;
+            openHttpConnection(path);
+            doc = Jsoup.parse(getResponse(param));
+            System.out.println(doc.body().text());
+            jsonData = new JSONObject(doc.body().text());
+            dataArray = jsonData.getJSONArray("list");
+            bidEntries = getBidEntriesFromJsonArray(dataArray);
+        }
+    }
+
+    private void parseBidResEntry(DapaEntry entry) throws IOException {
+        Document doc = Jsoup.parse(getResDetails(entry));
+
+        /*
+         * Getting the result details, including 공고번호, 개찰일시, and 입찰결과
+         */
+        Elements infoDivs = doc.getElementsByAttributeValue("summary", "상세테이블");
+        if (!infoDivs.isEmpty()) {
+            for (Element infoDiv : infoDivs) {
+                Elements headers = infoDiv.getElementsByTag("th");
+                for (Element header : headers) {
+                    System.out.println(header.nextElementSibling().text());
+                }
+            }
         } else {
             System.out.println(doc.html());
         }
     }
 
-    private void parseProdBidResEntry() {
+    private String getResDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.PROD_RES_VIEW;
+        if (entry.bidInfo.get("lvDivs1").equals("PEB")) {
+            path = NewDapaParser.FACIL_RES_VIEW;
+        }
 
+        openHttpConnection(path);
+        StringBuilder paramBuilder = new StringBuilder();
+        paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
+        paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
+        paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&bidx_date="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&anmt_numb="+entry.bidInfo.get("anmtNumb"));
+        paramBuilder.append("&rqst_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_divs="+entry.bidInfo.get("anmtDivs"));
+        paramBuilder.append("&bidx_stat="+entry.bidInfo.get("bidxStat"));
+        paramBuilder.append("&lvDivs1="+entry.bidInfo.get("lvDivs1"));
+        paramBuilder.append("&lvDivs2="+entry.bidInfo.get("lvDivs2"));
+        paramBuilder.append("&dmst_itnb=");
+        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
+            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        } else {
+            paramBuilder.append("***");
+        }
+
+        if (option.equals("PROD")) {
+            paramBuilder.append("&pageDivs=G6");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&pageDivs=S");
+        } else {
+            paramBuilder.append("&pageDivs=E");
+        }
+
+        String param = paramBuilder.toString();
+        return getResponse(param);
     }
 
-    private void getServiceAnnouncementList() {
-        String path = NewDapaParser.SERV_BID_ANN;
+    private HashMap getBidOrgDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.PROD_ORG_LIST;
+        if (entry.bidInfo.get("lvDivs1").equals("PEB")) {
+            path = NewDapaParser.FACIL_ORG_LIST;
+        }
+
+        openHttpConnection(path);
+        StringBuilder paramBuilder = new StringBuilder();
+
+        String param = paramBuilder.toString();
+        paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
+        paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
+        paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&csrt_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&bidx_date="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&benf_pldt="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&anmt_numb="+entry.bidInfo.get("anmtNumb"));
+        paramBuilder.append("&rqst_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&benf_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_divs="+entry.bidInfo.get("anmtDivs"));
+        paramBuilder.append("&lvDivs1="+entry.bidInfo.get("lvDivs1"));
+        paramBuilder.append("&lvDivs2="+entry.bidInfo.get("lvDivs2"));
+        paramBuilder.append("&dmst_itnb=");
+        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
+            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        } else {
+            paramBuilder.append("***");
+        }
+
+        if (option.equals("PROD")) {
+            paramBuilder.append("&pageDivs=G");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&pageDivs=S");
+        } else {
+            paramBuilder.append("&pageDivs=E");
+        }
+
+        Document doc = Jsoup.parse(getResponse(param));
+        JSONObject jsonData = new JSONObject(doc.body().text());
+        JSONArray orgArray = jsonData.getJSONArray("list");
+
+        for (int i = 0; i < orgArray.length(); i++) {
+            HashMap orgEntry = (HashMap) orgArray.getJSONObject(i).toMap();
+            String result = (String) orgEntry.get("bidxNote");
+            if (result.equals("낙찰")) {
+                return orgEntry;
+            }
+        }
+
+        return null;
     }
 
-    private void getFacilityAnnouncementList() {
-        String path = NewDapaParser.FACIL_BID_ANN;
+    private void parseNegoResEntry(DapaEntry entry) throws IOException {
+        Document doc = Jsoup.parse(getNegoResDetails(entry));
+
+        /*
+         * Getting the result details, including 공고번호, 개찰일시, and 입찰결과
+         */
+        Elements infoDivs = doc.getElementsByAttributeValue("summary", "상세테이블");
+        if (!infoDivs.isEmpty()) {
+            for (Element infoDiv : infoDivs) {
+                Elements headers = infoDiv.getElementsByTag("th");
+                for (Element header : headers) {
+                    System.out.println(header.nextElementSibling().text());
+                }
+            }
+        } else {
+            System.out.println(doc.html());
+        }
+    }
+
+    private String getNegoResDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.PROD_NEGO_RES;
+        if (entry.bidInfo.get("lvDivs1").equals("PEB")) {
+            path = NewDapaParser.FACIL_NEGO_RES;
+        }
+
+        openHttpConnection(path);
+        StringBuilder paramBuilder = new StringBuilder();
+        paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
+        paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
+        paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&csrt_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&bidx_date="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&negn_pldt="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&negn_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_numb="+entry.bidInfo.get("anmtNumb"));
+        paramBuilder.append("&rqst_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_divs="+entry.bidInfo.get("anmtDivs"));
+        paramBuilder.append("&bidx_stat="+entry.bidInfo.get("bidxStat"));
+        paramBuilder.append("&lvDivs1="+entry.bidInfo.get("lvDivs1"));
+        paramBuilder.append("&lvDivs2="+entry.bidInfo.get("lvDivs2"));
+        paramBuilder.append("&dmst_itnb=");
+        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
+            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        } else {
+            paramBuilder.append("***");
+        }
+
+        if (option.equals("PROD")) {
+            paramBuilder.append("&pageDivs=G");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&pageDivs=S");
+        } else {
+            paramBuilder.append("&pageDivs=E");
+        }
+
+        String param = paramBuilder.toString();
+        return getResponse(param);
+    }
+
+    private HashMap getNegoOrgDetails(DapaEntry entry) throws IOException {
+        String path = NewDapaParser.PROD_NEGO_ORG;
+        if (entry.bidInfo.get("lvDivs1").equals("PEB")) {
+            path = NewDapaParser.FACIL_NEGO_ORG;
+        }
+
+        openHttpConnection(path);
+        StringBuilder paramBuilder = new StringBuilder();
+
+        String param = paramBuilder.toString();
+        paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
+        paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
+        paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&csrt_numb="+entry.bidInfo.get("dcsnNumb"));
+        paramBuilder.append("&bidx_date="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&negn_pldt="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&benf_pldt="+entry.bidInfo.get("bidxDate"));
+        paramBuilder.append("&anmt_numb="+entry.bidInfo.get("anmtNumb"));
+        paramBuilder.append("&rqst_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&negn_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&benf_degr="+entry.bidInfo.get("rqstDegr"));
+        paramBuilder.append("&anmt_divs="+entry.bidInfo.get("anmtDivs"));
+        paramBuilder.append("&lvDivs1="+entry.bidInfo.get("lvDivs1"));
+        paramBuilder.append("&lvDivs2="+entry.bidInfo.get("lvDivs2"));
+        paramBuilder.append("&dmst_itnb=");
+        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
+            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        } else {
+            paramBuilder.append("***");
+        }
+
+        if (option.equals("PROD")) {
+            paramBuilder.append("&pageDivs=G");
+        } else if (option.equals("SERV")) {
+            paramBuilder.append("&pageDivs=S");
+        } else {
+            paramBuilder.append("&pageDivs=E");
+        }
+
+        Document doc = Jsoup.parse(getResponse(param));
+        JSONObject jsonData = new JSONObject(doc.body().text());
+        JSONArray orgArray = jsonData.getJSONArray("list");
+
+        for (int i = 0; i < orgArray.length(); i++) {
+            HashMap orgEntry = (HashMap) orgArray.getJSONObject(i).toMap();
+            String result = (String) orgEntry.get("negnNote");
+            if (result.equals("낙찰")) {
+                return orgEntry;
+            }
+        }
+
+        return null;
     }
 
     public int getTotal() throws IOException, ClassNotFoundException, SQLException {
