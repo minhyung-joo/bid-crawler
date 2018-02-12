@@ -379,6 +379,13 @@ public class NewDapaParser extends Parser {
         } else {
             System.out.println(doc.html());
         }
+
+        if (!entry.bidInfo.get("resultNm").equals("유찰")) {
+            HashMap org = getBidOrgDetails(entry);
+            if (org != null) {
+                System.out.println(org.get("mfkrName"));
+            }
+        }
     }
 
     private String getResDetails(DapaEntry entry) throws IOException {
@@ -427,8 +434,6 @@ public class NewDapaParser extends Parser {
 
         openHttpConnection(path);
         StringBuilder paramBuilder = new StringBuilder();
-
-        String param = paramBuilder.toString();
         paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
         paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
         paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
@@ -457,6 +462,7 @@ public class NewDapaParser extends Parser {
             paramBuilder.append("&pageDivs=E");
         }
 
+        String param = paramBuilder.toString();
         Document doc = Jsoup.parse(getResponse(param));
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray orgArray = jsonData.getJSONArray("list");
@@ -488,6 +494,13 @@ public class NewDapaParser extends Parser {
             }
         } else {
             System.out.println(doc.html());
+        }
+
+        if (!entry.bidInfo.get("resultNm").equals("유찰")) {
+            HashMap org = getNegoOrgDetails(entry);
+            if (org != null) {
+                System.out.println(org.get("mfkrName"));
+            }
         }
     }
 
@@ -539,8 +552,6 @@ public class NewDapaParser extends Parser {
 
         openHttpConnection(path);
         StringBuilder paramBuilder = new StringBuilder();
-
-        String param = paramBuilder.toString();
         paramBuilder.append("ordr_year="+entry.bidInfo.get("ordrYear"));
         paramBuilder.append("&dprt_code="+entry.bidInfo.get("dprtCode"));
         paramBuilder.append("&dcsn_numb="+entry.bidInfo.get("dcsnNumb"));
@@ -571,9 +582,10 @@ public class NewDapaParser extends Parser {
             paramBuilder.append("&pageDivs=E");
         }
 
+        String param = paramBuilder.toString();
         Document doc = Jsoup.parse(getResponse(param));
         JSONObject jsonData = new JSONObject(doc.body().text());
-        JSONArray orgArray = jsonData.getJSONArray("list");
+        JSONArray orgArray = jsonData.getJSONArray("resultList");
 
         for (int i = 0; i < orgArray.length(); i++) {
             HashMap orgEntry = (HashMap) orgArray.getJSONObject(i).toMap();
