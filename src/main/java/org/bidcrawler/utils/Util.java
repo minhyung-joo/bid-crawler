@@ -5,6 +5,12 @@ package org.bidcrawler.utils;
  */
 
 import java.io.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
 
 public class Util {
@@ -115,5 +121,99 @@ public class Util {
             }
         }
         return true;
+    }
+
+    /*
+     * From StackOverFlow
+     * https://stackoverflow.com/questions/1102891/how-to-check-if-a-string-is-numeric-in-java
+     */
+    public static boolean isNumeric(String str) {
+        if (str == null) {
+            return false;
+        }
+
+        return str.matches("-?\\d+(\\.\\d+)?");  //match a number with optional '-' and decimal.
+    }
+
+    public static boolean checkDataValidity(ResultSet rs, String site) throws SQLException {
+        boolean valid = true;
+
+        String bPrice = "";
+        double baseValue = 0;
+        if (site.equals("LH공사")) bPrice = rs.getString("기초금액");
+        else if (site.equals("국방조달청")) bPrice = rs.getString("기초예비가격");
+        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = rs.getString("설계금액");
+        else if (site.equals("한국마사회")) bPrice = rs.getString("예비가격기초금액");
+        if (bPrice == null) bPrice = "";
+        if (!bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            baseValue = amount;
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else valid = false;
+
+        double[] ratios = new double[15];
+        for (int i = 1; i <= 15; i++) {
+            String dupPrice = rs.getString("복수" + i);
+            if (dupPrice == null || dupPrice.equals("")) {
+                valid = false;
+                break;
+            }
+            double dupValue = Double.parseDouble(dupPrice);
+            if (dupValue == 0) {
+                valid = false;
+                break;
+            }
+
+            double ratio = (dupValue / baseValue - 1) * 100;
+            ratios[i-1] = ratio;
+        }
+        Arrays.sort(ratios);
+        double largestRatio = ratios[14];
+        double smallestRatio = ratios[0];
+
+        double largestLB = 0;
+        double largestUB = 0;
+        double smallestLB = 0;
+        double smallestUB = 0;
+        if (site.equals("LH공사")) {
+            largestLB = 1.70;
+            largestUB = 2.00;
+            smallestLB = -2.00;
+            smallestUB = -1.70;
+
+            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
+            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+        }
+        else if (site.equals("철도시설공단")) {
+            largestLB = 2.00;
+            largestUB = 2.70;
+            smallestLB = -2.70;
+            smallestUB = -2.10;
+
+            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
+            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+        }
+        else if (site.equals("도로공사") || site.equals("한국마사회")) {
+            largestLB = 2.50;
+            largestUB = 3.001;
+            smallestLB = -3.00;
+            smallestUB = -2.50;
+
+            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
+            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+        }
+
+        Date dateCheck = rs.getDate("개찰일시");
+        Calendar passCalendar = Calendar.getInstance();
+        passCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        passCalendar.set(Calendar.MINUTE, 0);
+        passCalendar.set(Calendar.SECOND, 0);
+        passCalendar.set(Calendar.MILLISECOND, 0);
+        Date passDate = passCalendar.getTime();
+        if (dateCheck.after(passDate)) valid = true;
+
+        return valid;
     }
 }

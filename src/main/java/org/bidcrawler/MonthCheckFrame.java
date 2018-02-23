@@ -41,7 +41,7 @@ import org.jdatepicker.JDatePicker;
 
 @SuppressWarnings("serial")
 public class MonthCheckFrame extends JFrame {
-    String[] columns = { "개찰일시", "사이트", "데이터베이스", "차수" };
+    String[] columns = { "개찰일시", "사이트", "DB", "차수" };
 
     // For SQL setup.
     Connection con;
@@ -152,7 +152,7 @@ public class MonthCheckFrame extends JFrame {
         });
 
         this.add(panel);
-        this.setSize(300, 410);
+        this.setSize(400, 510);
         this.setResizable(false);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setVisible(true);
@@ -235,17 +235,12 @@ public class MonthCheckFrame extends JFrame {
 
                         Parser parser = null;
                         if (site.equals("국방조달청")) {
-                            parser = new DapaParser(sd, ed, "", null);
+                            parser = new NewDapaParser(sd, ed, "", null);
 
                             String sql = "SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
                             rs = st.executeQuery(sql);
                             if (rs.next()) {
                                 dbcount = rs.getInt(1);
-                            }
-                            sql = "SELECT COUNT(*) FROM dapanegoinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
-                            rs = st.executeQuery(sql);
-                            if (rs.next()) {
-                                dbcount += rs.getInt(1);
                             }
                         }
                         else if (site.equals("한국마사회")) {

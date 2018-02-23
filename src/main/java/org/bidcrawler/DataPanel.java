@@ -3,7 +3,6 @@ package org.bidcrawler;
 /**
  * Created by ravenjoo on 6/24/17.
  */
-
 import org.bidcrawler.utils.Util;
 import org.jdatepicker.DatePicker;
 import org.jdatepicker.JDatePicker;
@@ -38,6 +37,7 @@ public class DataPanel extends JPanel {
     java.sql.Statement st;
     ResultSet rs;
 
+    String type;
     JPanel optionPanel;
     JComboBox<String> siteDrop;
 
@@ -46,21 +46,20 @@ public class DataPanel extends JPanel {
 
     JPanel bottomPanel;
 
-    public DataPanel() {
+    public DataPanel(String type) {
         super();
 
+        this.type = type;
         this.setLayout(new BorderLayout());
 
-        searchPanels = new ArrayList<SearchOptionPanel>(10);
+        searchPanels = new ArrayList<>(10);
 
         optionPanel = new JPanel();
-        siteDrop = new JComboBox<String>(Util.SITES);
-        siteDrop.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String site = siteDrop.getSelectedItem().toString();
-                for (int i = 0; i < 10; i++) {
-                    searchPanels.get(i).changeWork(site);
-                }
+        siteDrop = new JComboBox<>(Util.SITES);
+        siteDrop.addActionListener(e -> {
+            String site = siteDrop.getSelectedItem().toString();
+            for (int i = 0; i < 10; i++) {
+                searchPanels.get(i).changeWork(site);
             }
         });
         optionPanel.add(new JLabel("사이트 : "));
@@ -77,9 +76,8 @@ public class DataPanel extends JPanel {
                 data.scrollRectToVisible(data.getCellRect(data.getRowCount() - 1, 0, true));
             }
         });
-        data.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 15));
         data.setIntercellSpacing(new Dimension(1, 1));
-        //data.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        data.setRowHeight(20);
 
         JScrollPane scroll = new JScrollPane(data);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -101,7 +99,6 @@ public class DataPanel extends JPanel {
     }
 
     public void adjustColumns() {
-        data.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
         data.setRowHeight(20);
         final TableColumnModel columnModel = data.getColumnModel();
         for (int i = 0; i < 17; i++) {
@@ -129,7 +126,7 @@ public class DataPanel extends JPanel {
 
     private class SearchOptionPanel extends JPanel {
 
-        JComboBox<String> workDrop;
+        JComboBox workDrop;
         JTextField orgInput;
         JButton orgSearch;
         JCheckBox dateCheck;
@@ -143,7 +140,7 @@ public class DataPanel extends JPanel {
 
         public SearchOptionPanel() {
             super();
-            workDrop = new JComboBox<String>();
+            workDrop = new JComboBox();
             orgInput = new JTextField(15);
             orgSearch = new JButton("검색");
             orgSearch.addActionListener(new OrgListener());
@@ -243,6 +240,11 @@ public class DataPanel extends JPanel {
                 }
 
                 // Set up SQL connection.
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                } catch (ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                }
                 Connection con = null;
                 try {
                     String site = siteDrop.getSelectedItem().toString();
@@ -265,8 +267,7 @@ public class DataPanel extends JPanel {
                     else if (site.equals("도로공사")) tableName = "exbidinfo";
                     else if (site.equals("철도시설공단")) tableName = "railnetbidinfo";
 
-                    String sql = "";
-                    sql = "SELECT * FROM " + tableName + " WHERE ";
+                    String sql = "SELECT * FROM " + tableName + " WHERE ";
                     if (!org.equals("")) {
                         if (site.equals("LH공사")) sql += "지역본부=\"" + org + "\" AND ";
                         else if (site.equals("국방조달청")) sql += "발주기관=\"" + org + "\" AND ";
@@ -303,6 +304,9 @@ public class DataPanel extends JPanel {
                     if (rateCheck.isSelected() && site.equals("국방조달청")) {
                         sql += "하한=\"" + lowerBound + "\" AND 상한=\"" + upperBound + "\" AND ";
                     }
+                    if (site.equals("국방조달청") && type.equals("NEGO")) {
+                        sql += "입찰종류=\"협상\" AND ";
+                    }
                     sql += "개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호";
 
                     System.out.println(sql);
@@ -312,84 +316,7 @@ public class DataPanel extends JPanel {
                     m.setRowCount(0);
                     int index = 1;
                     while(rs.next()) {
-                        boolean valid = true;
-                        String bPrice = "";
-                        double baseValue = 0;
-                        if (site.equals("LH공사")) bPrice = rs.getString("기초금액");
-                        else if (site.equals("국방조달청")) bPrice = rs.getString("기초예비가격");
-                        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = rs.getString("설계금액");
-                        else if (site.equals("한국마사회")) bPrice = rs.getString("예비가격기초금액");
-                        if (bPrice == null) bPrice = "";
-                        if (!bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
-                            double amount = Double.parseDouble(bPrice);
-                            baseValue = amount;
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            bPrice = formatter.format(amount);
-                        }
-                        else valid = false;
-
-                        double[] ratios = new double[15];
-                        for (int i = 1; i <= 15; i++) {
-                            String dupPrice = rs.getString("복수" + i);
-                            if (dupPrice == null || dupPrice.equals("")) {
-                                valid = false;
-                                break;
-                            }
-                            double dupValue = Double.parseDouble(dupPrice);
-                            if (dupValue == 0) {
-                                valid = false;
-                                break;
-                            }
-
-                            double ratio = (dupValue / baseValue - 1) * 100;
-                            ratios[i-1] = ratio;
-                        }
-                        Arrays.sort(ratios);
-                        double largestRatio = ratios[14];
-                        double smallestRatio = ratios[0];
-
-                        double largestLB = 0;
-                        double largestUB = 0;
-                        double smallestLB = 0;
-                        double smallestUB = 0;
-                        if (site.equals("LH공사")) {
-                            largestLB = 1.70;
-                            largestUB = 2.00;
-                            smallestLB = -2.00;
-                            smallestUB = -1.70;
-
-                            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-                            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-                        }
-                        else if (site.equals("철도시설공단")) {
-                            largestLB = 2.00;
-                            largestUB = 2.70;
-                            smallestLB = -2.70;
-                            smallestUB = -2.10;
-
-                            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-                            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-                        }
-                        else if (site.equals("도로공사") || site.equals("한국마사회")) {
-                            largestLB = 2.50;
-                            largestUB = 3.001;
-                            smallestLB = -3.00;
-                            smallestUB = -2.50;
-
-                            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-                            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-                        }
-
-                        Date dateCheck = rs.getDate("개찰일시");
-                        Calendar passCalendar = Calendar.getInstance();
-                        passCalendar.set(Calendar.HOUR_OF_DAY, 0);
-                        passCalendar.set(Calendar.MINUTE, 0);
-                        passCalendar.set(Calendar.SECOND, 0);
-                        passCalendar.set(Calendar.MILLISECOND, 0);
-                        Date passDate = passCalendar.getTime();
-                        if (dateCheck.after(passDate)) valid = true;
-
-                        if (!valid) {
+                        if (!Util.checkDataValidity(rs, site)) {
                             continue;
                         }
 
@@ -403,6 +330,12 @@ public class DataPanel extends JPanel {
                         String limit = "-";
                         if (site.equals("국방조달청")) limit = rs.getString("면허명칭");
                         else if (site.equals("나라장터") || site.equals("도로공사")) limit = rs.getString("업종제한사항");
+
+                        String bPrice = "";
+                        if (site.equals("LH공사")) bPrice = rs.getString("기초금액");
+                        else if (site.equals("국방조달청")) bPrice = rs.getString("기초예비가격");
+                        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = rs.getString("설계금액");
+                        else if (site.equals("한국마사회")) bPrice = rs.getString("예비가격기초금액");
 
                         String ePrice = "";
                         if (site.equals("LH공사")) ePrice = rs.getString("예정금액");
@@ -496,8 +429,9 @@ public class DataPanel extends JPanel {
                                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod });
                         index++;
                     }
-                    adjustColumns();
 
+                    adjustColumns();
+                    data.setRowHeight(24);
                     con.close();
                 } catch (SQLException e1) {
                     e1.printStackTrace();
@@ -535,7 +469,6 @@ public class DataPanel extends JPanel {
                     }
 
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    String curDate = sdf.format(Calendar.getInstance().getTime());
                     ExcelWriter ew = new ExcelWriter(site, "입찰");
                     ew.setOptions(sd, ed, org, workType, lowerBound, upperBound);
                     ew.toExcel();

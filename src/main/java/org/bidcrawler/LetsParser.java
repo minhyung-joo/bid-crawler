@@ -100,8 +100,16 @@ public class LetsParser extends Parser {
             if (!shutdown) getList();
             setOption("결과");
             if (!shutdown) getList();
+
+            if (frame != null) {
+                frame.toggleButton();
+            }
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            if (frame != null) {
+                frame.toggleButton();
+            }
+
             e.printStackTrace();
         }
     }

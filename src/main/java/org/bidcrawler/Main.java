@@ -16,12 +16,12 @@ import org.bidcrawler.utils.*;
 public class Main extends JFrame {
     private static Logger logger = Logger.getGlobal();
 
-    JMenuBar menuBar;
-    JButton settingMenu;
-    JTabbedPane tabbedPane;
-    JComponent dataPanel;
-    JComponent negoPanel;
-    JComponent updatePanel;
+    private JMenuBar menuBar;
+    private JButton settingMenu;
+    private JTabbedPane tabbedPane;
+    private JComponent dataPanel;
+    private JComponent negoPanel;
+    private JComponent updatePanel;
 
     public Main() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException {
         super();
@@ -36,6 +36,8 @@ public class Main extends JFrame {
         } catch (Exception e) {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         }
+
+        UIManager.getLookAndFeel().getDefaults().put("defaultFont", new Font(null, Font.PLAIN, 20));
 
         initializeMenuBar();
         initializeTabbedPane();
@@ -65,8 +67,8 @@ public class Main extends JFrame {
     public void initializeTabbedPane() throws IOException {
         tabbedPane = new JTabbedPane();
 
-        dataPanel = new DataPanel();
-        negoPanel = new NegoPanel();
+        dataPanel = new DataPanel("BID");
+        negoPanel = new DataPanel("NEGO");
         updatePanel = new UpdatePanel();
 
         tabbedPane.addTab("데이터 조회", dataPanel);

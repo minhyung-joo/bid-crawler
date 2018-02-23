@@ -34,8 +34,6 @@ import org.jdatepicker.JDatePicker;
 
 public class GetFrame extends JFrame {
     ExecutorService es;
-    Future state;
-    Timer stateCheck;
     Timer auto;
     Parser parser;
     GetFrame frame;
@@ -59,31 +57,6 @@ public class GetFrame extends JFrame {
         this.site = site;
         frame = this;
 
-        stateCheck = new Timer();
-        stateCheck.scheduleAtFixedRate(new TimerTask() {
-            public void run() {
-                if (running) {
-                    boolean done = true;
-
-                    if (!state.isDone()) done = false;
-
-                    if (done) {
-                        toggle.doClick();
-
-                        if (autoCheck.isSelected()) {
-                            long delay = Long.parseLong(reps.getText());
-
-                            auto.schedule(new TimerTask() {
-                                public void run() {
-                                    toggle.doClick();
-                                }
-                            }, delay);
-                        }
-                    }
-                }
-            }
-        }, 2000, 2000);
-
         auto = new Timer();
 
         running = false;
@@ -106,6 +79,18 @@ public class GetFrame extends JFrame {
         toggle.addActionListener(new UpdateListener());
         count = new JLabel(curCount + " / " + totalCount);
         code = new JLabel("-");
+
+        autoCheck.addActionListener(e -> {
+            if (autoCheck.isSelected()) {
+                long delay = Long.parseLong(reps.getText());
+
+                auto.schedule(new TimerTask() {
+                    public void run() {
+                        toggle.doClick();
+                    }
+                }, delay);
+            }
+        });
 
         JPanel datePanel = new JPanel();
         datePanel.setLayout(new BoxLayout(datePanel, BoxLayout.PAGE_AXIS));
@@ -147,10 +132,16 @@ public class GetFrame extends JFrame {
             }
         });
         this.add(panel);
-        this.setSize(250, 250);
+        this.setSize(400, 300);
         this.setResizable(false);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setVisible(true);
+    }
+
+    public void toggleButton() {
+        if (toggle.getText().equals("중지")) {
+            toggle.doClick();
+        }
     }
 
     public void updateInfo(String c, boolean cur) {
@@ -185,7 +176,7 @@ public class GetFrame extends JFrame {
 
                 try {
                     if (site.equals("국방조달청")) {
-                        parser = new DapaParser(sd, ed, "", frame);
+                        parser = new NewDapaParser(sd, ed, "", frame);
                     }
                     else if (site.equals("한국마사회")) {
                         parser = new LetsParser(sd, ed, "", frame);
@@ -204,7 +195,7 @@ public class GetFrame extends JFrame {
 
                     totalCount = "" + parser.getTotal();
 
-                    state = es.submit(parser);
+                    es.submit(parser);
 
                 } catch (ClassNotFoundException | SQLException | IOException e1) {
                     Logger.getGlobal().log(Level.WARNING, e1.getMessage());

@@ -114,88 +114,6 @@ public class ExcelWriter {
         System.out.println("DB Connected");
     }
 
-    public boolean isValid(ResultSet rs) throws SQLException {
-        boolean valid = true;
-
-        String bPrice = "";
-        double baseValue = 0;
-        if (site.equals("LH공사")) bPrice = rs.getString("기초금액");
-        else if (site.equals("국방조달청")) bPrice = rs.getString("기초예비가격");
-        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = rs.getString("설계금액");
-        else if (site.equals("한국마사회")) bPrice = rs.getString("예비가격기초금액");
-        if (bPrice == null) bPrice = "";
-        if (!bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
-            double amount = Double.parseDouble(bPrice);
-            baseValue = amount;
-            DecimalFormat formatter = new DecimalFormat("#,###");
-            bPrice = formatter.format(amount);
-        }
-        else valid = false;
-
-        double[] ratios = new double[15];
-        for (int i = 1; i <= 15; i++) {
-            String dupPrice = rs.getString("복수" + i);
-            if (dupPrice == null || dupPrice.equals("")) {
-                valid = false;
-                break;
-            }
-            double dupValue = Double.parseDouble(dupPrice);
-            if (dupValue == 0) {
-                valid = false;
-                break;
-            }
-
-            double ratio = (dupValue / baseValue - 1) * 100;
-            ratios[i-1] = ratio;
-        }
-        Arrays.sort(ratios);
-        double largestRatio = ratios[14];
-        double smallestRatio = ratios[0];
-
-        double largestLB = 0;
-        double largestUB = 0;
-        double smallestLB = 0;
-        double smallestUB = 0;
-        if (site.equals("LH공사")) {
-            largestLB = 1.70;
-            largestUB = 2.00;
-            smallestLB = -2.00;
-            smallestUB = -1.70;
-
-            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-        }
-        else if (site.equals("철도시설공단")) {
-            largestLB = 2.00;
-            largestUB = 2.70;
-            smallestLB = -2.70;
-            smallestUB = -2.10;
-
-            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-        }
-        else if (site.equals("도로공사") || site.equals("한국마사회")) {
-            largestLB = 2.50;
-            largestUB = 3.001;
-            smallestLB = -3.00;
-            smallestUB = -2.50;
-
-            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
-        }
-
-        Date dateCheck = rs.getDate("개찰일시");
-        Calendar passCalendar = Calendar.getInstance();
-        passCalendar.set(Calendar.HOUR_OF_DAY, 0);
-        passCalendar.set(Calendar.MINUTE, 0);
-        passCalendar.set(Calendar.SECOND, 0);
-        passCalendar.set(Calendar.MILLISECOND, 0);
-        Date passDate = passCalendar.getTime();
-        if (dateCheck.after(passDate)) valid = true;
-
-        return valid;
-    }
-
     public void adjustColumns() {
 
         for (int i = 0; i < 54; i++) {
@@ -491,7 +409,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -660,7 +578,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -845,7 +763,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -1021,7 +939,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -1205,7 +1123,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -1380,7 +1298,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -1557,7 +1475,7 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!isValid(rs)) continue;
+            if (!Util.checkDataValidity(rs, site)) continue;
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;

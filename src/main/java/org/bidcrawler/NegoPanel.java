@@ -62,14 +62,6 @@ public class NegoPanel extends JPanel {
     ArrayList<NegoSearchPanel> searchPanels;
 
     JPanel bottomPanel;
-    JComboBox workDrop;
-    JTextField orgInput;
-    JButton orgSearch;
-    JCheckBox dateCheck;
-    DatePicker startDate;
-    DatePicker endDate;
-    JButton searchButton;
-    JButton excelButton;
 
     public NegoPanel() {
         super();
@@ -100,7 +92,6 @@ public class NegoPanel extends JPanel {
                 data.scrollRectToVisible(data.getCellRect(data.getRowCount() - 1, 0, true));
             }
         });
-        data.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 15));
         data.setIntercellSpacing(new Dimension(1, 1));
 
         JScrollPane scroll = new JScrollPane(data);
@@ -122,7 +113,6 @@ public class NegoPanel extends JPanel {
     }
 
     public void adjustColumns() {
-        data.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
         data.setRowHeight(20);
         final TableColumnModel columnModel = data.getColumnModel();
         for (int i = 0; i < 17; i++) {
@@ -466,6 +456,7 @@ public class NegoPanel extends JPanel {
                     }
 
                     adjustColumns();
+                    data.setRowHeight(24);
                     con.close();
                 } catch (SQLException e1) {
                     e1.printStackTrace();

@@ -4,7 +4,6 @@ package org.bidcrawler;
  * Created by ravenjoo on 6/25/17.
  */
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -17,6 +16,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.bidcrawler.utils.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,6 +54,9 @@ public class ExParser extends Parser {
 
     GetFrame frame;
 
+    // HttpClient suite
+    private HttpClient client;
+
     public ExParser(String sd, String ed, String op, GetFrame frame) throws ClassNotFoundException, SQLException {
         sd = sd.replaceAll("-", "");
         ed = ed.replaceAll("-", "");
@@ -75,6 +81,8 @@ public class ExParser extends Parser {
         );
         st = db_con.createStatement();
         rs = null;
+
+        this.client = HttpClientBuilder.create().build();
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
@@ -83,39 +91,28 @@ public class ExParser extends Parser {
         tester.run();
     }
 
-    public void openConnection(String path, String method) throws IOException {
-        url = new URL(path);
-        con = (HttpURLConnection) url.openConnection();
+    private String sendGetRequest(String path) throws IOException {
+        HttpGet request = new HttpGet(path);
 
-        con.setRequestMethod(method);
-        con.setRequestProperty("User-Agent", "Mozilla/5.0");
-        con.setRequestProperty("Accept-Language", "ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4");
-    }
+        // add request header
+        request.addHeader("User-Agent", "Mozilla/5.0");
 
-    public String getResponse(String param, String method) throws IOException {
-        if (method.equals("POST")) {
-            con.setDoOutput(true);
-            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-            wr.writeBytes(param);
-            wr.flush();
-            wr.close();
+        HttpResponse response = client.execute(request);
+
+        System.out.println("\nSending 'GET' request to URL : " + path);
+        System.out.println("Response Code : " +
+                response.getStatusLine().getStatusCode());
+
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent(), "euc-kr"));
+
+        StringBuffer result = new StringBuffer();
+        String line = "";
+        while ((line = rd.readLine()) != null) {
+            result.append(line);
         }
 
-        int responseCode = con.getResponseCode();
-        System.out.println("\nSending " + method + " request to URL : " + url);
-        System.out.println("Post parameters : " + param);
-        System.out.println("Response Code : " + responseCode);
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-
-        return response.toString();
+        return result.toString();
     }
 
     public String getPage() throws IOException {
@@ -142,8 +139,7 @@ public class ExParser extends Parser {
     public void getList() throws IOException, SQLException {
         String path = getPage();
 
-        openConnection(path, "GET");
-        Document doc = Jsoup.parse(getResponse(null, "GET"));
+        Document doc = Jsoup.parse(sendGetRequest(path));
         totalItems = Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
         System.out.println("전체 건 : " + totalItems);
         Element listing = doc.getElementsByTag("table").get(0);
@@ -171,8 +167,7 @@ public class ExParser extends Parser {
                 nextpage += "&startnum=" + startnum;
                 nextpage += "&endnum=" + endnum;
 
-                openConnection(nextpage, "GET");
-                doc = Jsoup.parse(getResponse(null, "GET"));
+                doc = Jsoup.parse(sendGetRequest(nextpage));
                 listing = doc.getElementsByTag("table").get(0);
                 rows = listing.getElementsByTag("tr");
             }
@@ -275,14 +270,15 @@ public class ExParser extends Parser {
                 itempath += link.attr("href").substring(2);
             }
 
-            openConnection(itempath, "GET");
-            Document itemdoc = Jsoup.parse(getResponse(null, "GET"));
+            Document itemdoc = Jsoup.parse(sendGetRequest(itempath));
             parseInfo(itemdoc, itempath, where, 1);
         }
     }
 
     public void parseInfo(Document doc, String itempath, String where, int dup) throws SQLException, IOException {
         if (it.equals("공고")) {
+            System.out.println(doc.html());
+
             String annDate = ""; // 공고일자
             String hasDup = ""; // 복수예가적용여부
             String hasRebid = ""; // 재입찰허용여부
@@ -359,8 +355,7 @@ public class ExParser extends Parser {
                                 newpath += "?notino=" + bidno.replaceAll("-", "");
                                 newpath += "&bidno=" + k;
                                 newpath += "&bidseq=1";
-                                openConnection(newpath, "GET");
-                                Document itemdoc = Jsoup.parse(getResponse(null, "GET"));
+                                Document itemdoc = Jsoup.parse(sendGetRequest(newpath));
                                 parseInfo(itemdoc, newpath, dupwhere, k);
                             }
                         }
@@ -413,6 +408,7 @@ public class ExParser extends Parser {
                     "공동수급의무여부=\"" + mustCommon + "\", " +
                     "설계금액=" + protoPrice + ", " +
                     "개찰일시=\"" + openDate + "\" " + where;
+            System.out.println(sql);
             st.executeUpdate(sql);
         }
         else if (it.equals("결과")) {
@@ -498,8 +494,7 @@ public class ExParser extends Parser {
                                 newpath += "?notino=" + bidno.replaceAll("-", "");
                                 newpath += "&bidno=" + k;
                                 newpath += "&bidseq=1";
-                                openConnection(newpath, "GET");
-                                Document itemdoc = Jsoup.parse(getResponse(null, "GET"));
+                                Document itemdoc = Jsoup.parse(sendGetRequest(newpath));
                                 parseInfo(itemdoc, newpath, dupwhere, k);
                             }
                         }
@@ -536,8 +531,7 @@ public class ExParser extends Parser {
                 else if (wt.equals("물품")) pricepath = ExParser.BUY_PRICE;
 
                 pricepath += itempath.split("\\?")[1];
-                openConnection(pricepath, "GET");
-                Document pricePage = Jsoup.parse(getResponse(null, "GET"));
+                Document pricePage = Jsoup.parse(sendGetRequest(pricepath));
                 Element dateHeader = pricePage.getElementsContainingOwnText("입찰일시").first();
                 if (dateHeader == null) {
                     dateHeader = pricePage.getElementsContainingOwnText("개찰일시").first();
@@ -571,8 +565,7 @@ public class ExParser extends Parser {
                 itempath = itempath.replace("bidseq", "p_bidseq");
                 itempath = itempath.replace("state", "p_state");
 
-                openConnection(itempath, "GET");
-                Document compPage = Jsoup.parse(getResponse(null, "GET"));
+                Document compPage = Jsoup.parse(sendGetRequest(itempath));
                 comp = compPage.getElementsByClass("totalCount_001").first().text();
                 comp = comp.replaceAll("[^\\d]", "");
                 if (comp.equals("")) comp = "0";
@@ -608,8 +601,16 @@ public class ExParser extends Parser {
                 setOption("물품결과");
                 if (!shutdown) getList();
             }
+
+            if (frame != null) {
+                frame.toggleButton();
+            }
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            if (frame != null) {
+                frame.toggleButton();
+            }
+
             e.printStackTrace();
         }
     }
@@ -617,18 +618,15 @@ public class ExParser extends Parser {
     public int getTotal() throws IOException {
         setOption("공사결과");
         String path = getPage();
-        openConnection(path, "GET");
-        Document doc = Jsoup.parse(getResponse(null, "GET"));
+        Document doc = Jsoup.parse(sendGetRequest(path));
         totalItems = Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
         setOption("용역결과");
         path = getPage();
-        openConnection(path, "GET");
-        doc = Jsoup.parse(getResponse(null, "GET"));
+        doc = Jsoup.parse(sendGetRequest(path));
         totalItems += Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
         setOption("물품결과");
         path = getPage();
-        openConnection(path, "GET");
-        doc = Jsoup.parse(getResponse(null, "GET"));
+        doc = Jsoup.parse(sendGetRequest(path));
         totalItems += Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
 
         return totalItems;
@@ -675,8 +673,7 @@ public class ExParser extends Parser {
 
         String path = getPage();
 
-        openConnection(path, "GET");
-        Document doc = Jsoup.parse(getResponse(null, "GET"));
+        Document doc = Jsoup.parse(sendGetRequest(path));
         totalItems = Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
         System.out.println("전체 건 : " + totalItems);
         Element listing = doc.getElementsByTag("table").get(0);
@@ -711,8 +708,7 @@ public class ExParser extends Parser {
                 nextpage += "&startnum=" + startnum;
                 nextpage += "&endnum=" + endnum;
 
-                openConnection(nextpage, "GET");
-                doc = Jsoup.parse(getResponse(null, "GET"));
+                doc = Jsoup.parse(sendGetRequest(nextpage));
                 listing = doc.getElementsByTag("table").get(0);
                 rows = listing.getElementsByTag("tr");
             }

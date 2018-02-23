@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bidcrawler.utils.*;
 import org.jsoup.Jsoup;
@@ -413,13 +415,15 @@ public class RailnetParser extends Parser {
             }
         }
 
-        String where = "WHERE 공고번호=\"" + bidno + "\" AND 차수=\"" + reno + "\"";
-        String sql = "UPDATE railnetbidinfo SET 심사기준=\""+criteria+"\", " +
-                "개찰일시=\""+openDate+"\", " +
-                "낙찰하한율=\""+bidRate+"\", " +
-                "입찰서접수마감일시=\""+deadline+"\", " +
-                "예가방식=\""+priceMethod+"\", 공고=1 " + where;
-        st.executeUpdate(sql);
+        if (!openDate.equals("")) {
+            String where = "WHERE 공고번호=\"" + bidno + "\" AND 차수=\"" + reno + "\"";
+            String sql = "UPDATE railnetbidinfo SET 심사기준=\""+criteria+"\", " +
+                    "개찰일시=\""+openDate+"\", " +
+                    "낙찰하한율=\""+bidRate+"\", " +
+                    "입찰서접수마감일시=\""+deadline+"\", " +
+                    "예가방식=\""+priceMethod+"\", 공고=1 " + where;
+            st.executeUpdate(sql);
+        }
     }
 
     public void parseRes(Document resPage, String result) throws SQLException, IOException {
@@ -592,7 +596,15 @@ public class RailnetParser extends Parser {
             if (!shutdown) getList();
             setOption("결과");
             if (!shutdown) getList();
+            if (frame != null) {
+                frame.toggleButton();
+            }
         } catch (IOException | SQLException e) {
+            Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            if (frame != null) {
+                frame.toggleButton();
+            }
+
             e.printStackTrace();
         }
 

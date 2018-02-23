@@ -40,7 +40,7 @@ import org.jdatepicker.DatePicker;
 import org.jdatepicker.JDatePicker;
 
 public class DayCheckFrame extends JFrame {
-    String[] columns = { "개찰일시", "사이트", "데이터베이스", "차수" };
+    String[] columns = { "개찰일시", "사이트", "DB", "차수" };
 
     // For SQL setup.
     Connection con;
@@ -151,7 +151,7 @@ public class DayCheckFrame extends JFrame {
         });
 
         this.add(panel);
-        this.setSize(300, 700);
+        this.setSize(400, 800);
         this.setResizable(false);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setVisible(true);
@@ -219,19 +219,15 @@ public class DayCheckFrame extends JFrame {
                     tm.setRowCount(0); // Empty the table.
                     if (site.equals("국방조달청")) {
                         for (String sday : days) {
-                            DapaParser parser = new DapaParser(sd, ed, "", null);
+                            NewDapaParser parser = new NewDapaParser(sd, ed, "", null);
 
                             int dbcount = 0;
                             int svcount = 0;
                             parser.setDate(sday, sday);
 
-                            rs = st.executeQuery("SELECT COUNT(*) FROM dapanegoinfo WHERE 개찰일시 BETWEEN \""+sday+" 00:00:00\" AND \""+sday+" 23:59:59\" AND 완료=1;");
-                            if (rs.next()) {
-                                dbcount = rs.getInt(1);
-                            }
                             rs = st.executeQuery("SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \""+sday+" 00:00:00\" AND \""+sday+" 23:59:59\" AND 완료=1;");
                             if (rs.next()) {
-                                dbcount += rs.getInt(1);
+                                dbcount = rs.getInt(1);
                             }
 
                             svcount = parser.getTotal();

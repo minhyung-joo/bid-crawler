@@ -523,8 +523,16 @@ public class NewLHParser extends Parser {
             if (!shutdown) getNoti();
             setOption("결과");
             if (!shutdown) getRes();
+
+            if (frame != null) {
+                frame.toggleButton();
+            }
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            if (frame != null) {
+                frame.toggleButton();
+            }
+
             e.printStackTrace();
         }
     }

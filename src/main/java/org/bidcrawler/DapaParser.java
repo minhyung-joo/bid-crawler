@@ -265,7 +265,7 @@ public class DapaParser extends Parser {
 
             if (exists) {
                 // Check the bid version and update level from the DB.
-                sql = "SELECT 공고, 기초예가공개 FROM dapabidinfo "+where;
+                sql = "SELECT 공고, 기초예가공개 FROM dapabidinfo " + where;
                 rs = st.executeQuery(sql);
                 int finished = 0;
                 String dbPriceOpen = "";
