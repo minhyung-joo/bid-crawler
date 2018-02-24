@@ -237,7 +237,7 @@ public class MonthCheckFrame extends JFrame {
                         if (site.equals("국방조달청")) {
                             parser = new NewDapaParser(sd, ed, "", null);
 
-                            String sql = "SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
+                            String sql = "SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 결과=1;";
                             rs = st.executeQuery(sql);
                             if (rs.next()) {
                                 dbcount = rs.getInt(1);

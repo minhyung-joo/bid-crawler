@@ -225,7 +225,7 @@ public class DayCheckFrame extends JFrame {
                             int svcount = 0;
                             parser.setDate(sday, sday);
 
-                            rs = st.executeQuery("SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \""+sday+" 00:00:00\" AND \""+sday+" 23:59:59\" AND 완료=1;");
+                            rs = st.executeQuery("SELECT COUNT(*) FROM dapabidinfo WHERE 개찰일시 BETWEEN \""+sday+" 00:00:00\" AND \""+sday+" 23:59:59\" AND 결과=1;");
                             if (rs.next()) {
                                 dbcount = rs.getInt(1);
                             }

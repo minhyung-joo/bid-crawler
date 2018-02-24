@@ -227,7 +227,9 @@ public class NewDapaParser extends Parser {
                 try {
                     JSONObject jsonEntry = (JSONObject) entry;
                     DapaEntry annEntry = new DapaEntry(jsonEntry);
-                    frame.updateInfo(annEntry.bidInfo.get("anmtNumb"), false);
+                    if (frame != null) {
+                        frame.updateInfo(annEntry.bidInfo.get("anmtNumb"), false);
+                    }
 
                     boolean exists = false;
                     boolean enter = true;
@@ -248,7 +250,7 @@ public class NewDapaParser extends Parser {
                     if (!Util.isNumeric(basicPrice)) {
                         priceOpen = "적용안함";
                     }
-                    else if (Integer.parseInt(basicPrice) > 0) {
+                    else if (Long.parseLong(basicPrice) > 0) {
                         priceOpen = "공개";
                     }
                     else {
@@ -275,7 +277,7 @@ public class NewDapaParser extends Parser {
                                 datetime.substring(10, 12);
                     }
 
-                    String where = "WHERE 공고번호=\"" + bidNum + "\" AND 차수=" + bidVer + " AND 항목번호=\"" + itemNum + "\" AND 공사번호=\"" + idenNum + "\"";
+                    String where = "WHERE 공고번호=\"" + bidNum + "\" AND 차수=" + bidVer + " AND 공사번호=\"" + idenNum + "\"";
                     String sql = "SELECT EXISTS(SELECT 공사번호 FROM dapabidinfo " + where + ")";
                     rs = st.executeQuery(sql);
                     if (rs.first()) exists = rs.getBoolean(1);
@@ -436,8 +438,6 @@ public class NewDapaParser extends Parser {
                         default:
                             break;
                     }
-
-                    System.out.println(header.text() + ": " + header.nextElementSibling().text());
                 }
             }
         } else {
@@ -480,6 +480,10 @@ public class NewDapaParser extends Parser {
             for (Element row : rows) {
                 license += row.getElementsByTag("td").get(1).text() + " ";
             }
+        }
+
+        if (license.length() >= 255) {
+            license = license.substring(0, 255);
         }
 
         return license;
@@ -682,7 +686,9 @@ public class NewDapaParser extends Parser {
                 JSONObject jsonEntry = (JSONObject) entry;
                 DapaEntry resEntry = new DapaEntry(jsonEntry);
                 curItem++;
-                frame.updateInfo(resEntry.bidInfo.get("anmtNumb"), true);
+                if (frame != null) {
+                    frame.updateInfo(resEntry.bidInfo.get("anmtNumb"), true);
+                }
 
                 boolean exists = false;
                 boolean enter = true;
@@ -693,6 +699,7 @@ public class NewDapaParser extends Parser {
                 String idenNum = resEntry.bidInfo.get("dcsnNumb"); // 공사번호
                 String itemNum = resEntry.bidInfo.get("dmstItnb"); // 항목번호
                 String bidType = resEntry.bidInfo.get("lvDivs2").equals("NEGO") ? "협상" : "경쟁"; // 입찰종류
+                String annType = resEntry.bidInfo.get("anmtDivsNm"); // 공고종류
                 String org = resEntry.bidInfo.get("dprtCodeNm"); // 발주기관
                 String result = resEntry.bidInfo.get("resultNm"); // 입찰결과
                 String bidMethod = resEntry.bidInfo.get("bidxMthdNm"); // 입찰방법
@@ -737,7 +744,7 @@ public class NewDapaParser extends Parser {
                     }
                 } else {
                     // If entry doesn't exists in db, insert new row.
-                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공고종류, 공사번호, 발주기관, 개찰일시, 입찰방법, 계약방법, 입찰결과";
+                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공사번호, 입찰종류, 공고종류, 발주기관, 개찰일시, 입찰방법, 계약방법, 입찰결과";
                     if (selectMethod.length() > 1) {
                         sql += ", 낙찰자결정방법";
                     }
@@ -746,8 +753,9 @@ public class NewDapaParser extends Parser {
                             "\""+bidNum+"\", " +
                             ""+bidVer+", " +
                             "\""+itemNum+"\", " +
-                            "\""+bidType+"\", " +
                             "\""+idenNum+"\", " +
+                            "\""+bidType+"\", " +
+                            "\""+annType+"\", " +
                             "\""+org+"\", " +
                             "\""+openDate+"\", " +
                             "\""+bidMethod+"\", " +
@@ -758,6 +766,47 @@ public class NewDapaParser extends Parser {
                     }
                     sql += ");";
                     st.executeUpdate(sql);
+
+                    // Check if there is announcement data, and copy the relevant data if there is.
+                    boolean annExists = false;
+                    String annWhere = "WHERE 공고번호=\""+bidNum+"\" AND " +
+                            "차수="+bidVer+" AND " +
+                            "공사번호=\""+idenNum+"\"";
+                    sql = "SELECT EXISTS(SELECT 공고번호 FROM dapabidinfo "+annWhere+");";
+                    rs = st.executeQuery(sql);
+                    if (rs.first()) annExists = rs.getBoolean(1);
+
+                    if (annExists) {
+                        sql = "SELECT 면허명칭, 사전심사, 입찰서제출마감일시, 공고 FROM dapabidinfo " + annWhere;
+                        rs = st.executeQuery(sql);
+                        int annFinished = 0;
+                        while (rs.next()) {
+                            annFinished = rs.getInt(4);
+                            if (annFinished == 1) {
+                                break;
+                            }
+                        }
+
+                        if (annFinished == 1) {
+                            String license = rs.getString(1);
+                            String prelim = rs.getString(2);
+                            String paperDeadline = rs.getString(3);
+
+                            sql = "UPDATE dapabidinfo SET ";
+                            if (license != null) {
+                                sql += "면허명칭=\"" + license + "\", ";
+                            }
+                            if (prelim != null) {
+                                sql += "사전심사=\"" + prelim + "\", ";
+                            }
+                            if (paperDeadline != null) {
+                                sql += "입찰서제출마감일시=\"" + paperDeadline + "\", ";
+                            }
+                            sql += "공고=1 ";
+                            sql += where;
+                            st.executeUpdate(sql);
+                        }
+                    }
                 }
 
                 if (enter) {
@@ -772,6 +821,13 @@ public class NewDapaParser extends Parser {
             // Get new page
             page++;
             param = "from_date=" + startDate + "&to_date=" + endDate + "&chkMy=1&currentPageNo=" + page;
+            if (option.equals("PROD")) {
+                param += "&exct_divs=B";
+            }
+            else if (option.equals("SERV")) {
+                param += "&exct_divs=A";
+            }
+
             openHttpConnection(path);
             doc = Jsoup.parse(getResponse(param));
             System.out.println(doc.body().text());
@@ -807,10 +863,12 @@ public class NewDapaParser extends Parser {
                     if (header.text().equals("사정률(%)")) {
                         range = header.nextElementSibling().text();
                         range = range.trim().replace("\\s+", "");
-                        if (range.contains("~")) {
+                        if (range.contains("~") && range.length() >= 3) {
                             String[] bounds = range.split("~");
                             lowerBound = bounds[0];
                             upperBound = bounds[1];
+                        } else {
+                            range = "";
                         }
                     }
                     if (header.text().equals("낙찰하한율(%)")) {
@@ -838,6 +896,9 @@ public class NewDapaParser extends Parser {
             if (org != null) {
                 companies = org.get("totlCnt").toString();
                 bidPrice = org.get("tbidAmnt").toString();
+                if (bidPrice.equals("0")) {
+                    bidPrice = org.get("tbidUtpr").toString();
+                }
             }
         }
 
@@ -868,7 +929,8 @@ public class NewDapaParser extends Parser {
         if (entry.bidInfo.get("resultNm").equals("유찰")) {
             sqlBuilder.append("완료=1, ");
         }
-        sqlBuilder.append("사전심사=\"" + prelim + "\" ");
+        sqlBuilder.append("사전심사=\"" + prelim + "\", ");
+        sqlBuilder.append("결과=1 ");
         sqlBuilder.append(where);
         String sql = sqlBuilder.toString();
         System.out.println(sql);
@@ -955,13 +1017,14 @@ public class NewDapaParser extends Parser {
 
         String param = paramBuilder.toString();
         Document doc = Jsoup.parse(getResponse(param));
+        System.out.println(doc);
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray orgArray = jsonData.getJSONArray("list");
 
         for (int i = 0; i < orgArray.length(); i++) {
             HashMap orgEntry = (HashMap) orgArray.getJSONObject(i).toMap();
             String result = (String) orgEntry.get("bidxNote");
-            if (result.equals("낙찰") || result.equals("1순위")) {
+            if (result != null && (result.equals("낙찰") || result.equals("1순위") || result.equals("동가낙찰"))) {
                 return orgEntry;
             }
         }
@@ -1028,6 +1091,8 @@ public class NewDapaParser extends Parser {
         String lowerBound = ""; // 하한
         String upperBound = ""; // 상한
         String result = entry.bidInfo.get("resultNm"); // 협상결과
+        String selectMethod = ""; // 낙찰자결정방법
+        String bidMethod = ""; // 입찰방법
 
         /*
          * Getting the result details, including 공고번호, 개찰일시, and 입찰결과
@@ -1057,6 +1122,14 @@ public class NewDapaParser extends Parser {
                         basePrice = header.nextElementSibling().text();
                         basePrice = basePrice.replaceAll("[^\\.0123456789]","");
                     }
+                    if (header.text().equals("낙찰자결정방법")) {
+                        selectMethod = header.nextElementSibling().text();
+                        selectMethod = selectMethod.trim().replaceAll("\\s+", "");
+                    }
+                    if (header.text().equals("입찰방법")) {
+                        bidMethod = header.nextElementSibling().text();
+                        bidMethod = bidMethod.trim().replaceAll("\\s+", "");
+                    }
                 }
             }
         } else {
@@ -1069,7 +1142,7 @@ public class NewDapaParser extends Parser {
             HashMap org = getNegoOrgDetails(entry);
             if (org != null) {
                 companies = org.get("totlCnt").toString();
-                if (option.equals("FACIL")) {
+                if (entry.bidInfo.get("lvDivs1").equals("PEB")) {
                     bidPrice = org.get("tnegnAmnt").toString();
                 } else {
                     if (org.get("vnegnAmnt") != null) {
@@ -1085,6 +1158,7 @@ public class NewDapaParser extends Parser {
         sqlBuilder.append("UPDATE dapabidinfo SET ");
         if (!basePrice.equals("") && Util.isNumeric(basePrice)) {
             sqlBuilder.append("기초예비가격=" + basePrice + ", ");
+            sqlBuilder.append("기초예가적용여부=\"적용\", ");
         }
         if (!expPrice.equals("") && Util.isNumeric(expPrice)) {
             sqlBuilder.append("예정가격=" + expPrice + ", ");
@@ -1106,7 +1180,10 @@ public class NewDapaParser extends Parser {
         if (entry.bidInfo.get("resultNm").equals("유찰")) {
             sqlBuilder.append("완료=1, ");
         }
-        sqlBuilder.append("입찰결과=\"" + result + "\" ");
+        sqlBuilder.append("낙찰자결정방법=\"" + selectMethod + "\", ");
+        sqlBuilder.append("입찰방법=\"" + bidMethod + "\", ");
+        sqlBuilder.append("입찰결과=\"" + result + "\", ");
+        sqlBuilder.append("결과=1 ");
         sqlBuilder.append(where);
         String sql = sqlBuilder.toString();
         System.out.println(sql);
@@ -1319,8 +1396,8 @@ public class NewDapaParser extends Parser {
     }
 
     public void setDate(String startDate, String endDate) {
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.startDate = startDate.replaceAll("-", "");
+        this.endDate = endDate.replaceAll("-", "");
     }
 
     public void setOption(String option) {
@@ -1337,7 +1414,7 @@ public class NewDapaParser extends Parser {
         ArrayList<String> idenNums = new ArrayList<String>();
         ArrayList<String> itemNums = new ArrayList<String>();
 
-        String sql = "SELECT 공고번호, 차수, 공사번호, 항목번호 FROM dapabidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
+        String sql = "SELECT 공고번호, 차수, 공사번호, 항목번호 FROM dapabidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 결과=1;";
         System.out.println(sql);
         rs = st.executeQuery(sql);
         while (rs.next()) {
@@ -1346,8 +1423,100 @@ public class NewDapaParser extends Parser {
             idenNums.add(rs.getString("공사번호"));
             itemNums.add(rs.getString("발주기관"));
         }
-        String path = NewDapaParser.PROD_BID_RES;
-        String param = "pageNo=1&startPageNo=1&pagePerRow=10&txtBidxDateFrom="+sm+"&txtBidxDateTo="+em;
+
+        String[] types = { "PROD", "SERV", "FACIL" };
+        String sd = sm.replaceAll("-", "");
+        String ed = em.replaceAll("-", "");
+        for (String type : types) {
+            String path = "";
+            switch (type) {
+                case "PROD":
+                    path = NewDapaParser.PROD_BID_RES;
+                    break;
+                case "FACIL":
+                    path = NewDapaParser.FACIL_BID_RES;
+                    break;
+                case "SERV":
+                    path = NewDapaParser.SERV_BID_RES;
+                    break;
+                default:
+                    break;
+            }
+
+            openHttpConnection(path);
+            int page = 1;
+            String param = "from_date=" + sd + "&to_date=" + ed + "&chkMy=1";
+            if (type.equals("PROD")) {
+                param += "&exct_divs=B";
+            }
+            else if (type.equals("SERV")) {
+                param += "&exct_divs=A";
+            }
+
+            Document doc = Jsoup.parse(getResponse(param));
+
+            System.out.println(doc.html());
+
+            JSONObject jsonData = new JSONObject(doc.body().text());
+            JSONArray dataArray = jsonData.getJSONArray("list");
+            List bidEntries = getBidEntriesFromJsonArray(dataArray);
+            while (!bidEntries.isEmpty()) {
+                for (Object entry : bidEntries) {
+                    if (shutdown) {
+                        return;
+                    }
+
+                    JSONObject jsonEntry = (JSONObject) entry;
+                    DapaEntry resEntry = new DapaEntry(jsonEntry);
+
+                    String bidNum = resEntry.bidInfo.get("anmtNumb"); // 공고번호
+                    String bidVer = resEntry.bidInfo.get("rqstDegr"); // 차수
+                    String idenNum = resEntry.bidInfo.get("dcsnNumb"); // 공사번호
+                    String itemNum = resEntry.bidInfo.get("dmstItnb"); // 항목번호
+                    if (!Util.isInteger(itemNum)) {
+                        itemNum = "***";
+                    }
+
+                    String key = bidNum + bidVer + idenNum + itemNum;
+                    int i = 0;
+                    for ( ; i < bidNums.size(); i++) {
+                        String dbKey = bidNums.get(i) + bidVers.get(i) + idenNums.get(i) + itemNums.get(i);
+                        if (key.equals(dbKey)) {
+                            break;
+                        }
+                    }
+
+                    bidNums.remove(i);
+                    bidVers.remove(i);
+                    idenNums.remove(i);
+                    itemNums.remove(i);
+                }
+
+                // Get new page
+                page++;
+                param = "from_date=" + sd + "&to_date=" + ed + "&chkMy=1&currentPageNo=" + page;
+                if (type.equals("PROD")) {
+                    param += "&exct_divs=B";
+                }
+                else if (type.equals("SERV")) {
+                    param += "&exct_divs=A";
+                }
+
+                openHttpConnection(path);
+                doc = Jsoup.parse(getResponse(param));
+                System.out.println(doc.body().text());
+                jsonData = new JSONObject(doc.body().text());
+                dataArray = jsonData.getJSONArray("list");
+                bidEntries = getBidEntriesFromJsonArray(dataArray);
+            }
+        }
+
+        for (int i = 0; i < bidNums.size(); i++) {
+            sql = "DELETE FROM dapabidinfo WHERE 공고번호=\"" + bidNums.get(i) + "\" AND 차수=\"" + bidVers.get(i) + "\" AND "
+                    + "공사번호=\"" + idenNums.get(i) + "\" AND 항목번호=\"" + itemNums.get(i) + "\"";
+            System.out.println(sql);
+            st.executeUpdate(sql);
+        }
     }
 
     public void run() {
@@ -1367,13 +1536,12 @@ public class NewDapaParser extends Parser {
             if (frame != null) {
                 frame.toggleButton();
             }
-        } catch (IOException | SQLException e) {
+        } catch (Exception e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            e.printStackTrace();
             if (frame != null) {
                 frame.toggleButton();
             }
-
-            e.printStackTrace();
         }
     }
 }

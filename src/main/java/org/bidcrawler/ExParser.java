@@ -616,18 +616,15 @@ public class ExParser extends Parser {
     }
 
     public int getTotal() throws IOException {
-        setOption("공사결과");
-        String path = getPage();
-        Document doc = Jsoup.parse(sendGetRequest(path));
-        totalItems = Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
-        setOption("용역결과");
-        path = getPage();
-        doc = Jsoup.parse(sendGetRequest(path));
-        totalItems += Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
-        setOption("물품결과");
-        path = getPage();
-        doc = Jsoup.parse(sendGetRequest(path));
-        totalItems += Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
+        totalItems = 0;
+        String[] bidTypes = { "공사결과", "용역결과", "물품결과" };
+
+        for (String bidtype : bidTypes) {
+            setOption(bidtype);
+            String path = getPage();
+            Document doc = Jsoup.parse(sendGetRequest(path));
+            totalItems += Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
+        }
 
         return totalItems;
     }
