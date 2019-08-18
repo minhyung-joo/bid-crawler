@@ -216,4 +216,21 @@ public class Util {
 
         return valid;
     }
+
+    public static String removeWhitespace(String str)
+    {
+        if (str == null) {
+            return null;
+        }
+
+        return str.replaceAll("\\s+", "");
+    }
+
+    public static String convertToNumeric(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        return str.replaceAll("[^\\d.-]", "");
+    }
 }

@@ -52,24 +52,23 @@ public class UpdatePanel extends JPanel {
         JButton updateButton = new JButton("업데이트");
         updateButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
         updateButton.addActionListener(event -> {
-            GetFrame g = new GetFrame(site);
+            new GetFrame(site);
         });
         buttonPanel.add(updateButton);
-        if ((!site.equals("LH공사")) && (!site.equals("철도시설공단"))) {
-            JButton dayButton = new JButton("일자별조회");
-            dayButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
-            dayButton.addActionListener(event -> {
-                DayCheckFrame d = new DayCheckFrame(site);
-            });
-            JButton monthButton = new JButton("월별조회");
-            monthButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
-            monthButton.addActionListener(event -> {
-                MonthCheckFrame m = new MonthCheckFrame(site);
-            });
 
-            buttonPanel.add(monthButton);
-            buttonPanel.add(dayButton);
-        }
+        JButton dayButton = new JButton("일자별조회");
+        dayButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+        dayButton.addActionListener(event -> {
+            new DayCheckFrame(site);
+        });
+        JButton monthButton = new JButton("월별조회");
+        monthButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+        monthButton.addActionListener(event -> {
+            new MonthCheckFrame(site);
+        });
+
+        buttonPanel.add(monthButton);
+        buttonPanel.add(dayButton);
 
         mainPanel.add(label, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);

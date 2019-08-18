@@ -65,17 +65,20 @@ public class LetsParser extends Parser {
     int curItem;
 
     GetFrame frame;
+    CheckFrame checkFrame;
 
-    public LetsParser(String sd, String ed, String op, GetFrame frame) throws SQLException, ClassNotFoundException {
+
+    public LetsParser(String sd, String ed, String op, GetFrame frame, CheckFrame checkFrame) throws SQLException, ClassNotFoundException {
         this.sd = sd;
         this.ed = ed;
         this.op = op;
         this.frame = frame;
+        this.checkFrame = checkFrame;
 
         totalItems = 0;
         curItem = 0;
 
-        formData = new HashMap<String, String>();
+        formData = new HashMap<>();
 
         // Set up SQL connection.
         db_con = DriverManager.getConnection(
@@ -88,7 +91,7 @@ public class LetsParser extends Parser {
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-        LetsParser tester = new LetsParser("2016-07-01", "2016-08-16", "공고", null);
+        LetsParser tester = new LetsParser("2016-07-01", "2016-08-16", "공고", null, null);
 
         tester.getList();
     }
@@ -242,6 +245,9 @@ public class LetsParser extends Parser {
             String prog = data.get(8).text(); // 상태
 
             if (frame != null) frame.updateInfo(bidno, false);
+            if (checkFrame != null) {
+                checkFrame.updateProgress(threadIndex);
+            }
 
             boolean exists = false;
 
@@ -294,6 +300,9 @@ public class LetsParser extends Parser {
             String result = data.get(6).text(); // 개찰상태
 
             if (frame != null) frame.updateInfo(bidno, true);
+            if (checkFrame != null) {
+                checkFrame.updateProgress(threadIndex);
+            }
 
             boolean exists = false;
 

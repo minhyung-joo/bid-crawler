@@ -43,7 +43,6 @@ public class Main extends JFrame {
         initializeTabbedPane();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         screenSize.setSize(screenSize.getWidth(), screenSize.getHeight() - 50);
         this.setSize(screenSize);
         this.setLayout(new GridLayout(1, 1));

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 public abstract class Parser implements Runnable {
+    int threadIndex;
     volatile boolean shutdown = false;
 
     public abstract int getTotal() throws IOException, ClassNotFoundException, SQLException;
@@ -21,5 +22,9 @@ public abstract class Parser implements Runnable {
 
     public void shutdownNow() {
         shutdown = true;
+    }
+
+    public void setThreadIndex(int threadIndex) {
+        this.threadIndex = threadIndex;
     }
 }

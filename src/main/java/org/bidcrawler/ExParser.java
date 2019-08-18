@@ -53,11 +53,12 @@ public class ExParser extends Parser {
     int curItem;
 
     GetFrame frame;
+    CheckFrame checkFrame;
 
     // HttpClient suite
     private HttpClient client;
 
-    public ExParser(String sd, String ed, String op, GetFrame frame) throws ClassNotFoundException, SQLException {
+    public ExParser(String sd, String ed, String op, GetFrame frame, CheckFrame checkFrame) throws ClassNotFoundException, SQLException {
         sd = sd.replaceAll("-", "");
         ed = ed.replaceAll("-", "");
 
@@ -72,6 +73,7 @@ public class ExParser extends Parser {
         curItem = 0;
 
         this.frame = frame;
+        this.checkFrame = checkFrame;
 
         // Set up SQL connection.
         db_con = DriverManager.getConnection(
@@ -86,7 +88,7 @@ public class ExParser extends Parser {
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-        ExParser tester = new ExParser("2017-01-01", "2017-02-11", "공사결과", null);
+        ExParser tester = new ExParser("2017-01-01", "2017-02-11", "공사결과", null, null);
 
         tester.run();
     }
@@ -190,6 +192,9 @@ public class ExParser extends Parser {
             where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
 
             if (frame != null) frame.updateInfo(bidno, false);
+            if (checkFrame != null) {
+                checkFrame.updateProgress(threadIndex);
+            }
 
             String sql = "SELECT EXISTS(SELECT 공고번호 FROM exbidinfo " + where + ")";
             rs = st.executeQuery(sql);
@@ -220,6 +225,9 @@ public class ExParser extends Parser {
             where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
 
             if (frame != null) frame.updateInfo(bidno, true);
+            if (checkFrame != null) {
+                checkFrame.updateProgress(threadIndex);
+            }
 
             // Check if the 공고번호 already exists in the DB.
             rs = st.executeQuery("SELECT EXISTS(SELECT 공고번호 FROM exbidinfo " + where + ")");

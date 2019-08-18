@@ -1,12 +1,12 @@
 package org.bidcrawler;
 
-/**
- * Created by ravenjoo on 6/25/17.
- */
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -14,75 +14,69 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.bidcrawler.utils.*;
+import org.bidcrawler.utils.Util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class NewLHParser extends Parser {
 
-    // For SQL setup.
+
+public class NewLHParser
+        extends Parser
+{
     Connection db_con;
-    java.sql.Statement st;
+    Statement st;
     ResultSet rs;
-
-    // For HTTP Connection
     URL url;
     HttpURLConnection con;
-
-    final static String BID_ANN = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
-    final static String CONST_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
-    final static String SERV_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
-    final static String MISC_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
-    final static String ITEM_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
-
-    final static String BID_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
-    final static String NORMAL_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
-    final static String NEGO_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
-    final static String TECH_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
-
-    String sd; // Start date of search. Could be blank.
-    String ed; // End date of search. Could be blank.
-    String op; // Option for stating which page you want to parse.
+    static final String BID_ANN = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
+    static final String CONST_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
+    static final String SERV_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
+    static final String MISC_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
+    static final String ITEM_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
+    static final String BID_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+    static final String NORMAL_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
+    static final String NEGO_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
+    static final String TECH_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
+    String sd;
+    String ed;
+    String op;
     int totalItems;
     int curItem = 0;
     GetFrame frame;
+    private CheckFrame checkFrame;
 
-    public NewLHParser(String sd, String ed, String op, GetFrame frame) throws ClassNotFoundException, SQLException {
+    public NewLHParser(String sd, String ed, String op, GetFrame frame, CheckFrame checkFrame) throws ClassNotFoundException, SQLException {
         this.sd = sd;
         this.ed = ed;
         this.op = op;
 
         this.frame = frame;
+        this.checkFrame = checkFrame;
 
-        // Set up SQL connection.
-        db_con = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
-                Util.DB_ID,
-                Util.DB_PW
-        );
+        db_con = DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8", Util.DB_ID, Util.DB_PW);
         st = db_con.createStatement();
         rs = null;
     }
 
-    public static void main(String args[]) throws IOException, ClassNotFoundException, SQLException {
-        NewLHParser test = new NewLHParser("2017/02/10", "2017/03/20", "", null);
+    public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
+        NewLHParser test = new NewLHParser("2017/02/10", "2017/03/20", "", null, null);
 
-        //System.out.println(test.getTotal());
+
         test.getNoti();
         test.getRes();
     }
 
     public void openConnection(String path, String method) throws IOException {
         url = new URL(path);
-        con = (HttpURLConnection) url.openConnection();
+        con = ((HttpURLConnection)url.openConnection());
 
         con.setRequestMethod(method);
         con.setRequestProperty("User-Agent", "Mozilla/5.0");
@@ -104,9 +98,9 @@ public class NewLHParser extends Parser {
         System.out.println("Response Code : " + responseCode);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
 
+        StringBuffer response = new StringBuffer();
+        String inputLine;
         while ((inputLine = in.readLine()) != null) {
             response.append(inputLine);
         }
@@ -116,24 +110,24 @@ public class NewLHParser extends Parser {
     }
 
     public void getNoti() throws IOException, SQLException {
-        String path = NewLHParser.BID_ANN;
+        String path = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
         String param = "gubun=Y";
-        param += "&s_tndrdocAcptOpenDtm=" + sd;
-        param += "&s_tndrdocAcptEndDtm=" + ed;
+        param = param + "&s_tndrdocAcptOpenDtm=" + sd;
+        param = param + "&s_tndrdocAcptEndDtm=" + ed;
         openConnection(path, "POST");
-        Document doc = Jsoup.parse(getResponse(param, "POST")); // Get the HTML
+        Document doc = Jsoup.parse(getResponse(param, "POST"));
 
-        Element dataTable = doc.getElementsByClass("search-result").first(); // Get the search result box
-        Elements links = dataTable.getElementsByAttribute("onmouseover"); // Filter out the links
+        Element dataTable = doc.getElementsByClass("search-result").first();
+        Elements links = dataTable.getElementsByAttribute("onmouseover");
         int row = 1;
         Iterator<Element> iter = links.iterator();
         while (iter.hasNext()) {
-            if (shutdown) return;
-
-            Element i = iter.next();
+            if (shutdown) { return;
+            }
+            Element i = (Element)iter.next();
 
             String values = i.attr("onclick").split("[(]")[1];
-            values = values.substring(0, values.length() - 2); // Parse the post parameters from the JavaScript call
+            values = values.substring(0, values.length() - 2);
 
             String[] keys = values.split(",");
             String bidNum = keys[0].substring(1, keys[0].length() - 1);
@@ -141,18 +135,18 @@ public class NewLHParser extends Parser {
             String job = keys[2].substring(2, keys[2].length() - 1);
             String emrgncy = keys[3].substring(2, keys[3].length() - 1);
 
-            if (frame != null) frame.updateInfo(bidNum, false);
-
-            HashMap<String, String> info = new HashMap<String, String>();
+            if (frame != null) { frame.updateInfo(bidNum, false);
+            }
+            HashMap<String, String> info = new HashMap();
             Elements data = i.getElementsByTag("li");
             for (int index = 1; index < data.size(); index++) {
-                Element d = data.get(index);
+                Element d = (Element)data.get(index);
                 System.out.println(d.html());
                 String[] segments = d.text().split(":");
                 String key = segments[0];
                 String value = segments[1].trim();
                 if (key.equals("입찰마감일자")) {
-                    value += ":" + segments[2];
+                    value = value + ":" + segments[2];
                 }
                 info.put(key, value);
             }
@@ -162,8 +156,8 @@ public class NewLHParser extends Parser {
             String where = "WHERE 공고번호=\"" + bidNum + "\"";
             String sql = "SELECT EXISTS(SELECT 공고번호 FROM lhbidinfo " + where + ")";
             rs = st.executeQuery(sql);
-            if (rs.first()) exists = rs.getBoolean(1);
-
+            if (rs.first()) { exists = rs.getBoolean(1);
+            }
             if (exists) {
                 System.out.println(bidNum + " exists.");
                 sql = "SELECT 공고, 공고현황 FROM lhbidinfo " + where;
@@ -174,38 +168,34 @@ public class NewLHParser extends Parser {
                     finished = rs.getInt(1);
                     dbProg = rs.getString(2) == null ? "" : rs.getString(2);
                 }
+
                 if (finished > 0) {
-                    if (dbProg.equals(info.get("진행상태"))) enter = false;
-                    else {
-                        sql = "UPDATE lhbidinfo SET 공고현황=\"" + info.get("진행상태") + "\" " + where;
+                    if (dbProg.equals(info.get("진행상태"))) { enter = false;
+                    } else {
+                        sql = "UPDATE lhbidinfo SET 공고현황=\"" + (String)info.get("진행상태") + "\" " + where;
                         st.executeUpdate(sql);
+
                     }
                 }
             }
-            else {
-                sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 계약방법, 입찰마감일자, 지역본부, 공고현황) VALUES (" +
-                        "\"" + bidNum + "\", " +
-                        "\"" + info.get("업무") + "\", " +
-                        "\"" + info.get("분류") + "\", " +
-                        "\"" + info.get("계약방법") + "\", " +
-                        "\"" + info.get("입찰마감일자") + "\", " +
-                        "\"" + info.get("지역본부") + "\", " +
-                        "\"" + info.get("진행상태") + "\");";
+            else
+            {
+                sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 계약방법, 입찰마감일자, 지역본부, 공고현황) VALUES (\"" + bidNum + "\", \"" + (String)info.get("업무") + "\", \"" + (String)info.get("분류") + "\", \"" + (String)info.get("계약방법") + "\", \"" + (String)info.get("입찰마감일자") + "\", \"" + (String)info.get("지역본부") + "\", \"" + (String)info.get("진행상태") + "\");";
                 System.out.println(sql);
                 st.executeUpdate(sql);
             }
 
             if (enter) {
                 String itemPath = "";
-                if (job.equals("10")) itemPath = NewLHParser.CONST_NOTI;
-                else if (job.equals("20")) itemPath = NewLHParser.SERV_NOTI;
-                else if (job.equals("30")) itemPath = NewLHParser.ITEM_NOTI;
-                else if (job.equals("40")) itemPath = NewLHParser.MISC_NOTI;
-
+                if (job.equals("10")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
+                } else if (job.equals("20")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
+                } else if (job.equals("30")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
+                } else if (job.equals("40")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
+                }
                 String itemParam = "bidNum=" + bidNum;
-                itemParam += "&bidDegree=" + bidDegree;
-                itemParam += "&cstrtnJobGbCd=" + job;
-                itemParam += "&emrgncyOrder=" + emrgncy;
+                itemParam = itemParam + "&bidDegree=" + bidDegree;
+                itemParam = itemParam + "&cstrtnJobGbCd=" + job;
+                itemParam = itemParam + "&emrgncyOrder=" + emrgncy;
 
                 openConnection(itemPath, "POST");
                 Document itemPage = Jsoup.parse(getResponse(itemParam, "POST"));
@@ -213,15 +203,15 @@ public class NewLHParser extends Parser {
             }
 
             row++;
-            if (row % 10 == 1) {
-                // Check if this is the last page
+            if (row % 10 == 1)
+            {
                 Element pageDiv = doc.getElementsByClass("paging").first();
                 Element pageLastElement = pageDiv.children().last();
                 if (pageLastElement.tagName().equals("span")) {
                     break;
                 }
 
-                // Get the next page
+
                 String newParam = param + "&targetRow=" + row;
 
                 openConnection(path, "POST");
@@ -237,41 +227,38 @@ public class NewLHParser extends Parser {
         Elements headers = itemPage.getElementsByTag("th");
 
         boolean hasBase = false;
-        HashMap<String, String> info = new HashMap<String, String>();
+        HashMap<String, String> info = new HashMap();
         for (Element h : headers) {
             String key = h.text();
-            if (h.nextElementSibling() == null) continue;
-            String value = h.nextElementSibling().text();
-            if (key.equals("용역유형") || key.equals("공사종류")) {
-                key = "업종유형";
+            if (h.nextElementSibling() != null) {
+                String value = h.nextElementSibling().text();
+                if ((key.equals("용역유형")) || (key.equals("공사종류"))) {
+                    key = "업종유형";
+                }
+                else if (key.equals("개찰일시")) {
+                    value = value + ":00";
+                }
+                else if (key.equals("기초금액")) {
+                    value = value.split(" ")[0];
+                    value = value.replaceAll(",", "");
+                    value = value.replaceAll("원", "");
+                    if (!Util.isInteger(value)) value = "0";
+                    hasBase = true;
+                }
+                else if (key.equals("설계가격")) {
+                    value = value.split(" ")[0];
+                    value = value.replaceAll(",", "");
+                    value = value.replaceAll("원", "");
+                    if (!Util.isInteger(value)) value = "0";
+                }
+                info.put(key, value);
             }
-            else if (key.equals("개찰일시")) {
-                value += ":00";
-            }
-            else if (key.equals("기초금액")) {
-                value = value.split(" ")[0];
-                value = value.replaceAll(",", "");
-                value = value.replaceAll("원", "");
-                if (!Util.isInteger(value)) value = "0";
-                hasBase = true;
-            }
-            else if (key.equals("설계가격")) {
-                value = value.split(" ")[0];
-                value = value.replaceAll(",", "");
-                value = value.replaceAll("원", "");
-                if (!Util.isInteger(value)) value = "0";
-            }
-            info.put(key, value);
         }
-        String sql = "UPDATE lhbidinfo SET 업종유형=\"" + info.get("업종유형") + "\", "
-                + "입찰방법=\"" + info.get("입찰방법") + "\", "
-                + "입찰방식=\"" + info.get("입찰방식") + "\", "
-                + "낙찰자선정방법=\"" + info.get("낙찰자선정방법") + "\", "
-                + "재입찰=\"재입찰 없음\", "
-                + "개찰일시=\"" + info.get("개찰일시") + "\", ";
-        if (hasBase) sql += "기초금액=" + info.get("기초금액") + ", ";
-        else sql += "기초금액=" + info.get("설계가격") + ", ";
-        sql += "공고=1 " + where;
+
+        String sql = "UPDATE lhbidinfo SET 업종유형=\"" + (String)info.get("업종유형") + "\", 입찰방법=\"" + (String)info.get("입찰방법") + "\", 입찰방식=\"" + (String)info.get("입찰방식") + "\", 낙찰자선정방법=\"" + (String)info.get("낙찰자선정방법") + "\", 재입찰=\"재입찰 없음\", 개찰일시=\"" + (String)info.get("개찰일시") + "\", ";
+        if (hasBase) sql = sql + "기초금액=" + (String)info.get("기초금액") + ", "; else
+            sql = sql + "기초금액=" + (String)info.get("설계가격") + ", ";
+        sql = sql + "공고=1 " + where;
 
         System.out.println(sql);
         st.executeUpdate(sql);
@@ -280,26 +267,26 @@ public class NewLHParser extends Parser {
     public void getRes() throws IOException, SQLException {
         curItem = 0;
 
-        String path = NewLHParser.BID_RES;
+        String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
         String param = "gubun=Y";
-        param += "&s_openDtm1=" + sd;
-        param += "&s_openDtm2=" + ed;
+        param = param + "&s_openDtm1=" + sd;
+        param = param + "&s_openDtm2=" + ed;
         openConnection(path, "POST");
-        Document doc = Jsoup.parse(getResponse(param, "POST")); // Get the HTML
+        Document doc = Jsoup.parse(getResponse(param, "POST"));
 
-        Element dataTable = doc.getElementsByClass("search-result").first(); // Get the search result box
-        Elements links = dataTable.getElementsByAttribute("onmouseover"); // Filter out the links
+        Element dataTable = doc.getElementsByClass("search-result").first();
+        Elements links = dataTable.getElementsByAttribute("onmouseover");
         int row = 1;
         Iterator<Element> iter = links.iterator();
         while (iter.hasNext()) {
-            if (shutdown) return;
+            if (shutdown) { return;
+            }
+            Element i = (Element)iter.next();
 
-            Element i = iter.next();
-
-            curItem++;
+            curItem += 1;
 
             String values = i.attr("onclick").split("[(]")[1];
-            values = values.substring(0, values.length() - 2); // Parse the post parameters from the JavaScript call
+            values = values.substring(0, values.length() - 2);
 
             String[] keys = values.split(",");
             String bidNum = keys[0].substring(1, keys[0].length() - 1);
@@ -309,18 +296,21 @@ public class NewLHParser extends Parser {
             String tenderopenCnt = keys[5].substring(2, keys[5].length() - 1);
 
             if (frame != null) frame.updateInfo(bidNum, true);
+            if (checkFrame != null) {
+                checkFrame.updateProgress(threadIndex);
+            }
 
             boolean exists = false;
             boolean enter = true;
-            HashMap<String, String> info = new HashMap<String, String>();
+            HashMap<String, String> info = new HashMap();
             Elements data = i.getElementsByTag("li");
             for (int index = 1; index < data.size(); index++) {
-                Element d = data.get(index);
+                Element d = (Element)data.get(index);
                 String[] segments = d.text().split(":");
                 String key = segments[0];
                 String value = segments[1].trim();
                 if (key.equals("개찰마감일시")) {
-                    value += ":" + segments[2];
+                    value = value + ":" + segments[2];
                 }
                 System.out.println(key + " : " + value);
                 info.put(key, value);
@@ -329,8 +319,8 @@ public class NewLHParser extends Parser {
             String where = "WHERE 공고번호=\"" + bidNum + "\"";
 
             rs = st.executeQuery("SELECT EXISTS(SELECT 공고번호 FROM lhbidinfo " + where + ")");
-            if (rs.first()) exists = rs.getBoolean(1);
-
+            if (rs.first()) { exists = rs.getBoolean(1);
+            }
             if (exists) {
                 rs = st.executeQuery("SELECT 완료, 개찰내역 FROM lhbidinfo " + where);
                 int finished = 0;
@@ -338,49 +328,69 @@ public class NewLHParser extends Parser {
                 if (rs.first()) {
                     finished = rs.getInt(1);
                     dbResult = rs.getString(2) == null ? "" : rs.getString(2);
+                    System.out.println(finished);
                 }
                 if (finished > 0) {
                     System.out.println(bidNum + " exists and " + dbResult);
-                    if (dbResult.equals(info.get("개찰내역")))	enter = false;
+                    if (dbResult.equals(info.get("개찰내역"))) {
+                        enter = false;
+                    }
                     else {
-                        String sql = "UPDATE lhbidinfo SET 개찰내역=\"" + info.get("개찰내역") + "\" " + where;
+                        String sql = "UPDATE lhbidinfo SET 개찰내역=\"" + (String)info.get("개찰내역") + "\" ";
+                        if ((((String)info.get("개찰내역")).equals("유찰")) || (((String)info.get("개찰내역")).equals("비공개"))) {
+                            sql = sql + ", 완료=1 ";
+                        }
+
+                        sql = sql + where;
                         st.executeUpdate(sql);
                     }
                 }
+                else if (!dbResult.equals("")) {
+                    st.executeUpdate("UPDATE lhbidinfo SET 완료=1 " + where);
+                } else {
+                    String sql = "UPDATE lhbidinfo SET 개찰내역=\"" + (String)info.get("개찰내역") + "\" ";
+                    if ((((String)info.get("개찰내역")).equals("유찰")) || (((String)info.get("개찰내역")).equals("비공개"))) {
+                        sql = sql + ", 완료=1 ";
+                    }
+
+                    sql = sql + where;
+                    st.executeUpdate(sql);
+
+                }
+
+
+
             }
-            else {
-                String sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 개찰일시, 개찰내역) VALUES (" +
-                        "\"" + bidNum + "\", " +
-                        "\"" + info.get("업무구분") + "\", " +
-                        "\"" + info.get("분류") + "\", " +
-                        "\"" + info.get("개찰마감일시") + "\", " +
-                        "\"" + info.get("개찰내역") + "\");";
+            else
+            {
+
+                String sql = "INSERT INTO lhbidinfo (공고번호, 업무, 분류, 개찰일시, 개찰내역) VALUES (\"" + bidNum + "\", \"" + (String)info.get("업무구분") + "\", \"" + (String)info.get("분류") + "\", \"" + (String)info.get("개찰마감일시") + "\", \"" + (String)info.get("개찰내역") + "\");";
                 System.out.println(sql);
                 st.executeUpdate(sql);
-                if (info.get("개찰내역").equals("유찰") || info.get("개찰내역").equals("비공개")) {
+                if ((((String)info.get("개찰내역")).equals("유찰")) || (((String)info.get("개찰내역")).equals("비공개"))) {
                     st.executeUpdate("UPDATE lhbidinfo SET 완료=1 " + where);
                     enter = false;
                 }
             }
 
-            if (enter && protocol.equals("Y") && Integer.parseInt(tenderopenCnt) > 0){
+            if ((enter) && (protocol.equals("Y")) && (Integer.parseInt(tenderopenCnt) > 0)) {
                 String itemPath = "";
                 String type = "";
-                if (tndrCtrctMedCd.equals("70")){
-                    itemPath = NewLHParser.NEGO_RES; //협상에의한계약
-                    type = NewLHParser.NEGO_RES;
+                if (tndrCtrctMedCd.equals("70")) {
+                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
+                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
                 }
                 else if (tndrCtrctMedCd.equals("90")) {
-                    itemPath = NewLHParser.TECH_RES; //기술가격분리입찰
-                    type = NewLHParser.TECH_RES;
+                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
+                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
                 }
                 else {
-                    itemPath = NewLHParser.NORMAL_RES; //일반
-                    type = NewLHParser.NORMAL_RES;
+                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
+                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
                 }
 
                 String itemParam = "bidNum=" + bidNum;
-                itemParam += "&bidDegree=" + bidDegree;
+                itemParam = itemParam + "&bidDegree=" + bidDegree;
 
                 openConnection(itemPath, "POST");
                 Document itemPage = Jsoup.parse(getResponse(itemParam, "POST"));
@@ -388,15 +398,15 @@ public class NewLHParser extends Parser {
             }
 
             row++;
-            if (row % 10 == 1) {
-                // Check if this is the last page
+            if (row % 10 == 1)
+            {
                 Element pageDiv = doc.getElementsByClass("paging").first();
                 Element pageLastElement = pageDiv.children().last();
                 if (pageLastElement.tagName().equals("span")) {
                     break;
                 }
 
-                // Get the next page
+
                 String newParam = param + "&targetRow=" + row;
 
                 openConnection(path, "POST");
@@ -412,14 +422,14 @@ public class NewLHParser extends Parser {
         Elements infoDivs = itemPage.getElementsByClass("box-table");
         Elements resDiv = itemPage.getElementsByClass("search-result");
 
-        Element infoTable = infoDivs.get(0).getElementsByTag("table").first();
+        Element infoTable = ((Element)infoDivs.get(0)).getElementsByTag("table").first();
 
-        HashMap<String, String> info = new HashMap<String, String>();
+        HashMap<String, String> info = new HashMap();
         Elements data = infoTable.getElementsByTag("th");
         for (Element d : data) {
             String key = d.text();
             String value = d.nextElementSibling().text().trim();
-            if (key.equals("설계가격") || key.equals("기초금액") || key.equals("예정가격") || key.equals("공사예산금액")) {
+            if ((key.equals("설계가격")) || (key.equals("기초금액")) || (key.equals("예정가격")) || (key.equals("공사예산금액"))) {
                 value = value.split(" ")[0];
                 value = value.replaceAll(",", "");
                 value = value.replaceAll("원", "");
@@ -433,22 +443,22 @@ public class NewLHParser extends Parser {
             }
             info.put(key, value);
         }
-
+        ArrayList<String> dupPrices;
         if (infoDivs.size() > 1) {
-            Element priceTable = infoDivs.get(1).getElementsByTag("table").first();
+            Element priceTable = ((Element)infoDivs.get(1)).getElementsByTag("table").first();
 
-            ArrayList<String> dupPrices = new ArrayList<String>();
-            ArrayList<String> dupCounts = new ArrayList<String>();
-            ArrayList<String> chosen = new ArrayList<String>();
+            dupPrices = new ArrayList();
+            ArrayList<String> dupCounts = new ArrayList();
+            ArrayList<String> chosen = new ArrayList();
             Elements priceRows = priceTable.getElementsByTag("tr");
             for (int i = 1; i < priceRows.size(); i++) {
-                Elements priceData = priceRows.get(i).getElementsByTag("td");
+                Elements priceData = ((Element)priceRows.get(i)).getElementsByTag("td");
 
-                String dupPrice = priceData.get(1).text();
+                String dupPrice = ((Element)priceData.get(1)).text();
                 dupPrice = dupPrice.replaceAll(",", "");
-                String dupCount = priceData.get(2).text();
+                String dupCount = ((Element)priceData.get(2)).text();
 
-                if (!priceData.get(1).attr("style").equals("")) { // Price is highlighted
+                if (!((Element)priceData.get(1)).attr("style").equals("")) {
                     chosen.add(dupPrice);
                 }
                 dupPrices.add(dupPrice);
@@ -460,18 +470,18 @@ public class NewLHParser extends Parser {
             StringBuilder sb = new StringBuilder();
             sb.append("UPDATE lhbidinfo SET ");
             for (int i = 1; i <= dupPrices.size(); i++) {
-                sb.append("복수" + i + "=" + dupPrices.get(i-1) + ", 복참" + i + "=" + dupCounts.get(i-1) + ", ");
-                companies += Integer.parseInt(dupCounts.get(i-1));
+                sb.append("복수" + i + "=" + (String)dupPrices.get(i - 1) + ", 복참" + i + "=" + (String)dupCounts.get(i - 1) + ", ");
+                companies += Integer.parseInt((String)dupCounts.get(i - 1));
             }
-            for (int i = 1; i <= chosen.size() && i <= 4; i++) {
-                sb.append("선택가격" + i + "=" + chosen.get(i-1) + ", ");
-                expPrice += Long.parseLong(chosen.get(i-1));
+            for (int i = 1; (i <= chosen.size()) && (i <= 4); i++) {
+                sb.append("선택가격" + i + "=" + (String)chosen.get(i - 1) + ", ");
+                expPrice += Long.parseLong((String)chosen.get(i - 1));
             }
-            if ( (expPrice % 4) > 0 ) {
-                expPrice = (expPrice / 4) + 1;
-            }
-            else expPrice = expPrice / 4;
-            companies = companies / 2;
+            if (expPrice % 4L > 0L) {
+                expPrice = expPrice / 4L + 1L;
+            } else
+                expPrice /= 4L;
+            companies /= 2;
             sb.append("참가수=" + companies + ", 예정금액=" + expPrice + " " + where);
 
             String sql = sb.toString();
@@ -488,9 +498,9 @@ public class NewLHParser extends Parser {
                     break;
                 }
 
-                if (type.equals(NewLHParser.NORMAL_RES)) {
-                    if (!listData.get(6).text().contains("낙찰하한율미만")) {
-                        String bidPrice = listData.get(3).text().split(":")[1].trim();
+                if (type.equals("http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev")) {
+                    if (!((Element)listData.get(6)).text().contains("낙찰하한율미만")) {
+                        String bidPrice = ((Element)listData.get(3)).text().split(":")[1].trim();
                         bidPrice = bidPrice.replaceAll(",", "");
                         String sql = "UPDATE lhbidinfo SET 투찰금액=" + bidPrice + " " + where;
                         System.out.println(sql);
@@ -499,7 +509,7 @@ public class NewLHParser extends Parser {
                     }
                 }
                 else {
-                    String bidPrice = listData.get(4).text().split(":")[1].trim();
+                    String bidPrice = ((Element)listData.get(4)).text().split(":")[1].trim();
                     bidPrice = bidPrice.replaceAll(",", "");
                     String sql = "UPDATE lhbidinfo SET 투찰금액=" + bidPrice + " " + where;
                     System.out.println(sql);
@@ -510,27 +520,37 @@ public class NewLHParser extends Parser {
         }
 
         String sql = "UPDATE lhbidinfo SET ";
-        if (info.containsKey("기초금액")) sql += "기초금액=" + info.get("기초금액") + ", ";
-        if (info.containsKey("예정가격")) sql += "기존예정가격=" + info.get("예정가격") + ", ";
-        sql += "완료=1 " + where;
+        if (info.containsKey("기초금액")) sql = sql + "기초금액=" + (String)info.get("기초금액") + ", ";
+        if (info.containsKey("예정가격")) sql = sql + "기존예정가격=" + (String)info.get("예정가격") + ", ";
+        sql = sql + "완료=1 " + where;
         System.out.println(sql);
         st.executeUpdate(sql);
     }
 
     public void run() {
         try {
-            setOption("공고");
-            if (!shutdown) getNoti();
-            setOption("결과");
-            if (!shutdown) getRes();
-
+            if (op.equals("건수차이")) {
+                manageDifference(sd, ed);
+            } else {
+                setOption("공고");
+                if (!shutdown) getNoti();
+                setOption("결과");
+                if (!shutdown) { getRes();
+                }
+            }
             if (frame != null) {
                 frame.toggleButton();
             }
-        } catch (IOException | SQLException e) {
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
+            }
+        } catch (IOException|SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
             if (frame != null) {
                 frame.toggleButton();
+            }
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
             }
 
             e.printStackTrace();
@@ -538,19 +558,23 @@ public class NewLHParser extends Parser {
     }
 
     public int getTotal() throws IOException, ClassNotFoundException, SQLException {
-        String path = NewLHParser.BID_RES;
+        String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
         String param = "gubun=Y";
-        param += "&s_openDtm1=" + sd;
-        param += "&s_openDtm2=" + ed;
+        param = param + "&s_openDtm1=" + sd;
+        param = param + "&s_openDtm2=" + ed;
         openConnection(path, "POST");
         Document doc = Jsoup.parse(getResponse(param, "POST"));
 
         int row = 1;
         Element pageDiv = doc.getElementsByClass("paging").first();
+        if (pageDiv == null) {
+            return 0;
+        }
+
         Elements pages = pageDiv.getElementsByTag("a");
         if (!pages.isEmpty()) {
             int r = Integer.parseInt(pages.last().attr("onclick").replaceAll("[^\\d]", ""));
-            while (r > row && !pages.isEmpty()) {
+            while ((r > row) && (!pages.isEmpty())) {
                 row = r;
                 String newParam = param + "&targetRow=" + row;
 
@@ -563,15 +587,15 @@ public class NewLHParser extends Parser {
             }
         }
 
-        Element dataTable = doc.getElementsByClass("search-result").first(); // Get the search result box
-        Elements links = dataTable.getElementsByAttribute("onmouseover"); // Filter out the links
-        if (links.size() > 0) row += (links.size() - 1);
+        Element dataTable = doc.getElementsByClass("search-result").first();
+        Elements links = dataTable.getElementsByAttribute("onmouseover");
+        if (links.size() > 0) row += links.size() - 1;
         return row;
     }
 
     public void setDate(String sd, String ed) {
-        this.sd = sd;
-        this.ed = ed;
+        this.sd = sd.replaceAll("-", "/");
+        this.ed = ed.replaceAll("-", "/");
     }
 
     public void setOption(String op) {
@@ -583,7 +607,73 @@ public class NewLHParser extends Parser {
     }
 
     public void manageDifference(String sm, String em) throws SQLException, IOException {
+        try {
+            ArrayList<String> bidNums = new ArrayList();
+            String sql = "SELECT 공고번호 FROM lhbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\"";
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                bidNums.add(rs.getString("공고번호"));
+            }
 
+            String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+            String param = "gubun=Y";
+            param = param + "&s_openDtm1=" + sd;
+            param = param + "&s_openDtm2=" + ed;
+            openConnection(path, "POST");
+            Document doc = Jsoup.parse(getResponse(param, "POST"));
+
+            Element dataTable = doc.getElementsByClass("search-result").first();
+            Elements links = dataTable.getElementsByAttribute("onmouseover");
+            int row = 1;
+            Iterator<Element> iter = links.iterator();
+            while (iter.hasNext()) {
+                if (shutdown) { return;
+                }
+                Element i = (Element)iter.next();
+
+                curItem += 1;
+
+                String values = i.attr("onclick").split("[(]")[1];
+                values = values.substring(0, values.length() - 2);
+
+                String[] keys = values.split(",");
+                String bidNum = keys[0].substring(1, keys[0].length() - 1);
+                for (int k = 0; k < bidNums.size(); k++) {
+                    if (((String)bidNums.get(k)).equals(bidNum)) {
+                        bidNums.remove(k);
+                        break;
+                    }
+                }
+
+                row++;
+                if (row % 10 == 1)
+                {
+                    Element pageDiv = doc.getElementsByClass("paging").first();
+                    Element pageLastElement = pageDiv.children().last();
+                    if (pageLastElement.tagName().equals("span")) {
+                        break;
+                    }
+
+
+                    String newParam = param + "&targetRow=" + row;
+
+                    openConnection(path, "POST");
+                    doc = Jsoup.parse(getResponse(newParam, "POST"));
+                    dataTable = doc.getElementsByClass("search-result").first();
+                    links = dataTable.getElementsByAttribute("onmouseover");
+                    iter = links.iterator();
+                }
+            }
+
+            for (int i = 0; i < bidNums.size(); i++) {
+                String bidNum = (String)bidNums.get(i);
+                sql = "DELETE FROM lhbidinfo WHERE 공고번호=\"" + bidNum + "\"";
+                st.executeUpdate(sql);
+            }
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            Logger.getGlobal().log(Level.WARNING, sw.toString());
+        }
     }
-
 }

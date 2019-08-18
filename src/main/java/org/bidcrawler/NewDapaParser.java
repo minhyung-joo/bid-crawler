@@ -91,10 +91,11 @@ public class NewDapaParser extends Parser {
     String cookie = null;
 
     private GetFrame frame;
+    private CheckFrame checkFrame;
 
     public static void main(String[] args) {
         try {
-            NewDapaParser parser = new NewDapaParser("20180202", "20180212", "PROD", null);
+            NewDapaParser parser = new NewDapaParser("20180202", "20180212", "PROD", null, null);
             parser.parseBidData();
         } catch (IOException e) {
             e.printStackTrace();
@@ -103,12 +104,13 @@ public class NewDapaParser extends Parser {
         }
     }
 
-    public NewDapaParser(String startDate, String endDate, String option, GetFrame frame) throws SQLException {
+    public NewDapaParser(String startDate, String endDate, String option, GetFrame frame, CheckFrame checkFrame) throws SQLException {
         this.client = HttpClientBuilder.create().build();
         this.startDate = startDate.replaceAll("-", "");
         this.endDate = endDate.replaceAll("-", "");
         this.option = option;
         this.frame = frame;
+        this.checkFrame = checkFrame;
 
         totalItems = 0;
         curItem = 0;
@@ -229,6 +231,9 @@ public class NewDapaParser extends Parser {
                     DapaEntry annEntry = new DapaEntry(jsonEntry);
                     if (frame != null) {
                         frame.updateInfo(annEntry.bidInfo.get("anmtNumb"), false);
+                    }
+                    if (checkFrame != null) {
+                        checkFrame.updateProgress(threadIndex);
                     }
 
                     boolean exists = false;
@@ -688,6 +693,9 @@ public class NewDapaParser extends Parser {
                 curItem++;
                 if (frame != null) {
                     frame.updateInfo(resEntry.bidInfo.get("anmtNumb"), true);
+                }
+                if (checkFrame != null) {
+                    checkFrame.updateProgress(threadIndex);
                 }
 
                 boolean exists = false;

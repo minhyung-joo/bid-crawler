@@ -176,21 +176,21 @@ public class GetFrame extends JFrame {
 
                 try {
                     if (site.equals("국방조달청")) {
-                        parser = new NewDapaParser(sd, ed, "", frame);
+                        parser = new NewDapaParser(sd, ed, "", frame, null);
                     }
                     else if (site.equals("한국마사회")) {
-                        parser = new LetsParser(sd, ed, "", frame);
+                        parser = new LetsParser(sd, ed, "", frame, null);
                     }
                     else if (site.equals("LH공사")) {
                         sd = sd.replaceAll("-", "/");
                         ed = ed.replaceAll("-", "/");
-                        parser = new NewLHParser(sd, ed, "", frame);
+                        parser = new NewLHParser(sd, ed, "", frame, null);
                     }
                     else if (site.equals("도로공사")) {
-                        parser = new ExParser(sd, ed, "", frame);
+                        parser = new ExParser(sd, ed, "", frame, null);
                     }
                     else if (site.equals("철도시설공단")) {
-                        parser = new RailnetParser(sd, ed, "", frame);
+                        parser = new NewRailnetParser(sd, ed, "", frame, null);
                     }
 
                     totalCount = "" + parser.getTotal();
