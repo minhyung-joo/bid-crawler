@@ -23,25 +23,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 public class LetsParser extends Parser {
 
     // For SQL setup.
@@ -51,7 +32,6 @@ public class LetsParser extends Parser {
 
     final static String ANN_LIST = "http://ebid.kra.co.kr/bid/notice/all/list.do";
     final static String RES_LIST = "http://ebid.kra.co.kr/res/all/list.do";
-
     final static String ANN_INFO = "http://ebid.kra.co.kr/bid/notice/all/view.do";
     final static String RES_INFO = "http://ebid.kra.co.kr/res/all/view.do";
 
@@ -67,7 +47,6 @@ public class LetsParser extends Parser {
     GetFrame frame;
     CheckFrame checkFrame;
 
-
     public LetsParser(String sd, String ed, String op, GetFrame frame, CheckFrame checkFrame) throws SQLException, ClassNotFoundException {
         this.sd = sd;
         this.ed = ed;
@@ -79,15 +58,6 @@ public class LetsParser extends Parser {
         curItem = 0;
 
         formData = new HashMap<>();
-
-        // Set up SQL connection.
-        db_con = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
-                Util.DB_ID,
-                Util.DB_PW
-        );
-        st = db_con.createStatement();
-        rs = null;
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
@@ -153,6 +123,17 @@ public class LetsParser extends Parser {
     }
 
     public void getList() throws IOException, SQLException {
+        if (db_con == null) {
+            // Set up SQL connection.
+            db_con = DriverManager.getConnection(
+                    "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                    Util.DB_ID,
+                    Util.DB_PW
+            );
+            st = db_con.createStatement();
+            rs = null;
+        }
+
         String path = "";
         if (op.equals("공고")) path = LetsParser.ANN_LIST;
         else if (op.equals("결과")) path = LetsParser.RES_LIST;
