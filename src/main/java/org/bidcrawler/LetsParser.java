@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -22,6 +23,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import org.apache.http.client.utils.URIBuilder;
 
 public class LetsParser extends Parser {
 
@@ -110,7 +113,7 @@ public class LetsParser extends Parser {
         System.out.println("Post parameters : " + param);
         System.out.println("Response Code : " + responseCode);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), Charset.forName("euc-kr")));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
@@ -120,6 +123,40 @@ public class LetsParser extends Parser {
         in.close();
 
         return response.toString();
+    }
+
+    public Document getListPage(int page) throws IOException {
+        if (op.equals("공고")) {
+            return getAnnListPage(page);
+        } else if (op.equals("결과")) {
+            return getResListPage(page);
+        } else {
+            System.out.println("Please declare which list to fetch");
+            return null;
+        }
+    }
+
+    private Document getAnnListPage(int page) throws IOException {
+        String path = LetsParser.ANN_LIST;
+        openConnection(path, "POST");
+        URIBuilder builder = new URIBuilder();
+        builder.addParameter("pageIndex", page + "");
+        builder.addParameter("openDateFrom", sd);
+        builder.addParameter("openDateTo", ed);
+        String param = builder.toString();
+        return Jsoup.parse(getResponse(param, "POST"));
+    }
+
+    private Document getResListPage(int page) throws IOException {
+        String path = LetsParser.RES_LIST;
+        openConnection(path, "POST");
+        URIBuilder builder = new URIBuilder();
+        builder.addParameter("page", page + "");
+        builder.addParameter("is_from_main", "true");
+        builder.addParameter("open_date_from", sd);
+        builder.addParameter("open_date_to", ed);
+        String param = builder.toString();
+        return Jsoup.parse(getResponse(param, "POST"));
     }
 
     public void getList() throws IOException, SQLException {
@@ -134,30 +171,10 @@ public class LetsParser extends Parser {
             rs = null;
         }
 
-        String path = "";
-        if (op.equals("공고")) path = LetsParser.ANN_LIST;
-        else if (op.equals("결과")) path = LetsParser.RES_LIST;
-        else {
-            System.out.println("Declare the operation!");
-            return;
-        }
-
-        openConnection(path, "POST");
-
-        String param = "";
-
-        if (op.equals("공고")) {
-            param = "pageIndex=1&openDateFrom="+sd+"&openDateTo="+ed;
-        }
-        else if (op.equals("결과")) {
-            param = "is_from_main=true&page=1&open_date_from="+sd+"&open_date_to="+ed;
-        }
-
-        Document doc = Jsoup.parse(getResponse(param, "POST"));
-        Elements rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
-
-        int items = rows.size();
         int page = 1;
+        Document doc = getListPage(page);
+        Elements rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
+        int items = rows.size();
 
         do {
             if (rows.get(1).text().length() > 24) {
@@ -190,16 +207,7 @@ public class LetsParser extends Parser {
                     }
                 }
                 if (nextPage) {
-                    openConnection(path, "POST");
-
-                    if (op.equals("공고")) {
-                        param = "pageIndex="+page+"&openDateFrom="+sd+"&openDateTo="+ed;
-                    }
-                    else if (op.equals("결과")) {
-                        param = "is_from_main=true&page="+page+"&open_date_from="+sd+"&open_date_to="+ed;
-                    }
-
-                    doc = Jsoup.parse(getResponse(param, "POST"));
+                    doc = getListPage(page);
                     rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
                     items = rows.size();
                 }
