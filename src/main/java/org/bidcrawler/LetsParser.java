@@ -174,7 +174,7 @@ public class LetsParser extends Parser {
         int page = 1;
         Document doc = getListPage(page);
         Elements rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
-        int items = rows.size();
+        int items;
 
         do {
             if (rows.get(1).text().length() > 24) {
@@ -221,17 +221,39 @@ public class LetsParser extends Parser {
         } while(items > 0);
     }
 
+    public HashMap<String, String> parseAnnListRow(Element row) {
+        HashMap<String, String> listItems = new HashMap<>();
+        Elements data = row.getElementsByTag("td");
+        listItems.put("bidno", data.get(1).text());
+        listItems.put("place", data.get(2).text());
+        listItems.put("compType", data.get(4).text());
+        listItems.put("deadline", data.get(6).text() + " 00:00:00");
+        listItems.put("bidMethod", data.get(7).text());
+        listItems.put("prog", data.get(8).text());
+        return listItems;
+    }
+
+    public HashMap<String, String> parseResListRow(Element row) {
+        HashMap<String, String> listItems = new HashMap<>();
+        Elements data = row.getElementsByTag("td");
+        listItems.put("bidno", data.get(1).text());
+        listItems.put("workType", data.get(3).text());
+        listItems.put("compType", data.get(4).text());
+        listItems.put("openDate", data.get(5).text());
+        listItems.put("result", data.get(6).text());
+        return listItems;
+    }
+
     public boolean parseListRow(Element row) throws SQLException {
         boolean enter = true;
-        Elements data = row.getElementsByTag("td");
-
         if (op.equals("공고")) {
-            String bidno = data.get(1).text(); // 공고번호
-            String place = data.get(2).text(); // 사업장
-            String compType = data.get(4).text(); // 계약방식
-            String deadline = data.get(6).text() + " 00:00:00"; // 입찰마감
-            String bidMethod = data.get(7).text(); // 입찰방식
-            String prog = data.get(8).text(); // 상태
+            HashMap<String, String> listItems = parseAnnListRow(row);
+            String bidno = listItems.get("bidno"); // 공고번호
+            String place = listItems.get("place"); // 사업장
+            String compType = listItems.get("compType"); // 계약방식
+            String deadline = listItems.get("deadline"); // 입찰마감
+            String bidMethod = listItems.get("bidMethod"); // 입찰방식
+            String prog = listItems.get("prog"); // 상태
 
             if (frame != null) frame.updateInfo(bidno, false);
             if (checkFrame != null) {
@@ -282,11 +304,12 @@ public class LetsParser extends Parser {
             }
         }
         else if (op.equals("결과")) {
-            String bidno = data.get(1).text(); // 공고번호
-            String workType = data.get(3).text(); // 입찰구분
-            String compType = data.get(4).text(); // 계약방법
-            String openDate = data.get(5).text(); // 개찰일시
-            String result = data.get(6).text(); // 개찰상태
+            HashMap<String, String> listItems = parseResListRow(row);
+            String bidno = listItems.get("bidno"); // 공고번호
+            String workType = listItems.get("workType"); // 입찰구분
+            String compType = listItems.get("compType"); // 계약방법
+            String openDate = listItems.get("openDate"); // 개찰일시
+            String result = listItems.get("result"); // 개찰상태
 
             if (frame != null) frame.updateInfo(bidno, true);
             if (checkFrame != null) {
@@ -339,15 +362,28 @@ public class LetsParser extends Parser {
         return enter;
     }
 
+    public Document getResultInfoPage(String bidno) throws IOException {
+        String path = LetsParser.RES_INFO;
+
+        openConnection(path, "POST");
+
+        String param = "b_code="+bidno.substring(3)+"&b_type=1&is_from_main=true&page=1&open_date_from="+sd+"&open_date_to="+ed;
+        Document doc = Jsoup.parse(getResponse(param, "POST"));
+        return doc;
+    }
+
+    public Document getAnnInfoPage(String bidno) throws IOException {
+        String path = LetsParser.ANN_INFO;
+        path += "?bCode="+bidno.substring(3)+"&b_code="+bidno.substring(3);
+
+        openConnection(path, "GET");
+        Document doc = Jsoup.parse(getResponse(null, "GET"));
+        return doc;
+    }
+
     public void getInfo(String bidno, String result) throws IOException, SQLException {
         if (op.equals("결과")) {
-            String path = LetsParser.RES_INFO;
-
-            openConnection(path, "POST");
-
-            String param = "";
-            param = "b_code="+bidno.substring(3)+"&b_type=1&is_from_main=true&page=1&open_date_from="+sd+"&open_date_to="+ed;
-            Document doc = Jsoup.parse(getResponse(param, "POST"));
+            Document doc = getResultInfoPage(bidno);
             parseInfo(doc, bidno);
 
             if (!result.equals("유찰") && !result.equals("입찰취소")) {
@@ -359,11 +395,7 @@ public class LetsParser extends Parser {
             st.executeUpdate(sql);
         }
         else if (op.equals("공고")) {
-            String path = LetsParser.ANN_INFO;
-            path += "?bCode="+bidno.substring(3)+"&b_code="+bidno.substring(3);
-
-            openConnection(path, "GET");
-            Document doc = Jsoup.parse(getResponse(null, "GET"));
+            Document doc = getAnnInfoPage(bidno);
             Elements captions = doc.getElementsByTag("caption");
 
             String selectMethod = ""; // 낙찰자결정방법
