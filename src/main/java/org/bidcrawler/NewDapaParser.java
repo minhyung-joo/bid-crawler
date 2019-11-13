@@ -215,8 +215,6 @@ public class NewDapaParser extends Parser {
         String param = "date_divs=1&date_from=" + startDate + "&date_to=" + endDate + "&numb_divs=1&exct_divs=B&currentPageNo=" + page;
         Document doc = Jsoup.parse(getResponse(param));
 
-        System.out.println(doc.html());
-
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray dataArray = jsonData.getJSONArray("list");
         List bidEntries = getBidEntriesFromJsonArray(dataArray);
@@ -372,7 +370,6 @@ public class NewDapaParser extends Parser {
             param = "date_divs=1&date_from=" + startDate + "&date_to=" + endDate + "&numb_divs=1&exct_divs=B&currentPageNo=" + page;
             openHttpConnection(path);
             doc = Jsoup.parse(getResponse(param));
-            System.out.println(doc.body().text());
             jsonData = new JSONObject(doc.body().text());
             dataArray = jsonData.getJSONArray("list");
             bidEntries = getBidEntriesFromJsonArray(dataArray);
@@ -575,8 +572,6 @@ public class NewDapaParser extends Parser {
                     default:
                         break;
                 }
-
-                System.out.println(header.text() + ": " + header.nextElementSibling().text());
             }
         } else {
             System.out.println(doc.html());
@@ -676,8 +671,6 @@ public class NewDapaParser extends Parser {
         }
 
         Document doc = Jsoup.parse(getResponse(param));
-
-        System.out.println(doc.html());
 
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray dataArray = jsonData.getJSONArray("list");
@@ -1025,7 +1018,6 @@ public class NewDapaParser extends Parser {
 
         String param = paramBuilder.toString();
         Document doc = Jsoup.parse(getResponse(param));
-        System.out.println(doc);
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray orgArray = jsonData.getJSONArray("list");
 
