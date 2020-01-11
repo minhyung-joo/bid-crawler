@@ -154,10 +154,10 @@ public class NewRailnetParser extends Parser
             String items = ((Element)spans.get(1)).text().replaceAll("[^\\d.-]", "");
             if (Util.isNumeric(items)) {
                 totalItems = Integer.parseInt(items);
-                System.out.println(totalItems);
                 int currentItem = 1;
                 Element entryDiv = doc.getElementsByTag("tbody").first();
                 Elements itemRows = entryDiv.getElementsByTag("tr");
+
                 while (currentItem <= totalItems) {
                     for (Element itemRow : itemRows) {
                         Element anchor = itemRow.getElementsByTag("a").first();
@@ -218,6 +218,10 @@ public class NewRailnetParser extends Parser
                         doc = Jsoup.parse(sendPostRequest(path, urlParameters));
                         entryDiv = doc.getElementsByTag("tbody").first();
                         itemRows = entryDiv.getElementsByTag("tr");
+                        String checkText = "자료가 없습니다. 다른 검색조건을 선택해주세요";
+                        if (itemRows.get(0).text().equals(checkText)) {
+                            break;
+                        }
                     }
                 }
             }
