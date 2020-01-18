@@ -192,9 +192,6 @@ public class ExParser extends Parser {
             where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
 
             if (frame != null) frame.updateInfo(bidno, false);
-            if (checkFrame != null) {
-                checkFrame.updateProgress(threadIndex);
-            }
 
             String sql = "SELECT EXISTS(SELECT 공고번호 FROM exbidinfo " + where + ")";
             rs = st.executeQuery(sql);
@@ -613,10 +610,16 @@ public class ExParser extends Parser {
             if (frame != null) {
                 frame.toggleButton();
             }
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
+            }
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
             if (frame != null) {
                 frame.toggleButton();
+            }
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
             }
 
             e.printStackTrace();

@@ -140,7 +140,7 @@ public class NewRailnetParser extends Parser
 
     public void parseAnnouncementData() throws SQLException
     {
-        String path = "http://ebid.kr.or.kr/krn/krnBidList.do";
+        String path = NOTI_LIST;
         int page = 1;
         List<NameValuePair> urlParameters = new ArrayList();
         urlParameters.add(new BasicNameValuePair("fromDate", startDate));
@@ -193,7 +193,7 @@ public class NewRailnetParser extends Parser
                         }
 
                         if (enter) {
-                            path = "http://ebid.kr.or.kr/krn/krnBidDetail.do";
+                            path = NOTI_PAGE;
                             urlParameters.clear();
                             urlParameters.add(new BasicNameValuePair("gyErBeonho", gyErBeonho));
                             urlParameters.add(new BasicNameValuePair("ggNyeondo", ggNyeondo));
@@ -210,7 +210,7 @@ public class NewRailnetParser extends Parser
 
                     if ((currentItem % 10 == 1) && (currentItem <= totalItems)) {
                         page++;
-                        path = "http://ebid.kr.or.kr/krn/krnBidList.do";
+                        path = NOTI_LIST;
                         urlParameters.clear();
                         urlParameters.add(new BasicNameValuePair("fromDate", startDate));
                         urlParameters.add(new BasicNameValuePair("endDate", endDate));
@@ -262,8 +262,6 @@ public class NewRailnetParser extends Parser
                         paperDeadline = header.nextElementSibling().text();
                         break;
                     case "개찰일시":
-                        openDate = header.nextElementSibling().text();
-                        break;
                     case "개찰(입찰)일시":
                         openDate = header.nextElementSibling().text();
                         break;
@@ -303,7 +301,7 @@ public class NewRailnetParser extends Parser
     }
 
     public void parseResultData() throws SQLException {
-        String path = "http://ebid.kr.or.kr/krn/krnBidOpengList.do";
+        String path = RES_LIST;
         int page = 1;
         List<NameValuePair> urlParameters = new ArrayList();
         urlParameters.add(new BasicNameValuePair("fromDate", startDate));
@@ -372,7 +370,8 @@ public class NewRailnetParser extends Parser
 
                         if (enter) {
                             StringBuilder urlBuilder = new StringBuilder();
-                            urlBuilder.append("http://ebid.kr.or.kr/bid/rpt/bidOpengResult.do?");
+                            urlBuilder.append(RES_PAGE);
+                            urlBuilder.append("?");
                             urlBuilder.append("gyErBeonho=" + gyErBeonho);
                             urlBuilder.append("&ggNyeondo=" + ggNyeondo);
                             urlBuilder.append("&ggGubun=" + ggGubun);
@@ -405,7 +404,8 @@ public class NewRailnetParser extends Parser
                             }
                             else if (linkData[0].contains("getFailOrReBidDesc")) {
                                 urlBuilder = new StringBuilder();
-                                urlBuilder.append("http://ebid.kr.or.kr/bid/rpt/bidOpengFailResult.do?");
+                                urlBuilder.append(FAIL_RES_PAGE);
+                                urlBuilder.append("?");
                                 urlBuilder.append("gyErBeonho=" + gyErBeonho);
                                 urlBuilder.append("&ggNyeondo=" + ggNyeondo);
                                 urlBuilder.append("&ggGubun=" + ggGubun);
@@ -425,7 +425,7 @@ public class NewRailnetParser extends Parser
 
                     if ((currentItem % 10 == 1) && (currentItem <= totalItems)) {
                         page++;
-                        path = "http://ebid.kr.or.kr/krn/krnBidOpengList.do";
+                        path = RES_LIST;
                         urlParameters.clear();
                         urlParameters.add(new BasicNameValuePair("fromDate", startDate));
                         urlParameters.add(new BasicNameValuePair("endDate", endDate));
@@ -523,7 +523,7 @@ public class NewRailnetParser extends Parser
 
         if (!doc.getElementsContainingOwnText("예비가격 추첨현황").isEmpty()) {
             StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.append("http://ebid.kr.or.kr/bid/rpt/bidPdpDrwtRpt.do");
+            urlBuilder.append(PRICE_INFO_PAGE);
             urlBuilder.append("?");
             urlBuilder.append(param);
             String path = urlBuilder.toString();
@@ -533,7 +533,7 @@ public class NewRailnetParser extends Parser
 
         if (!doc.getElementsContainingText("예정가격 추첨조서").isEmpty()) {
             StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.append("http://ebid.kr.or.kr/bid/rpt/bidPdpDrwtStatus.do");
+            urlBuilder.append(PRICE_COMP_PAGE);
             urlBuilder.append("?");
             urlBuilder.append(param);
             String path = urlBuilder.toString();
@@ -623,7 +623,7 @@ public class NewRailnetParser extends Parser
 
     public int getTotal() throws java.io.IOException, ClassNotFoundException, SQLException
     {
-        String path = "http://ebid.kr.or.kr/krn/krnBidOpengList.do";
+        String path = RES_LIST;
         int page = 1;
         List<NameValuePair> urlParameters = new ArrayList();
         urlParameters.add(new BasicNameValuePair("fromDate", startDate));
@@ -671,7 +671,7 @@ public class NewRailnetParser extends Parser
                 bidVers.add(rs.getString("차수"));
             }
 
-            String path = "http://ebid.kr.or.kr/krn/krnBidOpengList.do";
+            String path = RES_LIST;
             int page = 1;
             List<NameValuePair> urlParameters = new ArrayList();
             urlParameters.add(new BasicNameValuePair("fromDate", sm));
@@ -711,7 +711,7 @@ public class NewRailnetParser extends Parser
 
                         if ((currentItem % 10 == 1) && (currentItem <= totalItems)) {
                             page++;
-                            path = "http://ebid.kr.or.kr/krn/krnBidOpengList.do";
+                            path = RES_LIST;
                             urlParameters.clear();
                             urlParameters.add(new BasicNameValuePair("fromDate", sm));
                             urlParameters.add(new BasicNameValuePair("endDate", em));

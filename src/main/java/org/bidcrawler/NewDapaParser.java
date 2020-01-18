@@ -230,9 +230,6 @@ public class NewDapaParser extends Parser {
                     if (frame != null) {
                         frame.updateInfo(annEntry.bidInfo.get("anmtNumb"), false);
                     }
-                    if (checkFrame != null) {
-                        checkFrame.updateProgress(threadIndex);
-                    }
 
                     boolean exists = false;
                     boolean enter = true;
@@ -1536,11 +1533,17 @@ public class NewDapaParser extends Parser {
             if (frame != null) {
                 frame.toggleButton();
             }
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
+            }
         } catch (Exception e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
             e.printStackTrace();
             if (frame != null) {
                 frame.toggleButton();
+            }
+            if (checkFrame != null) {
+                checkFrame.signalFinish();
             }
         }
     }
