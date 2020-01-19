@@ -6,6 +6,7 @@ CREATE TABLE `railnetbidinfo` (
   `설계금액` decimal(20,2) DEFAULT NULL,
   `예정가격` decimal(20,2) DEFAULT NULL,
   `투찰금액` decimal(20,2) DEFAULT NULL,
+  `A값` decimal(20,2) DEFAULT NULL,
   `복수1` decimal(20,2) DEFAULT NULL,
   `복수2` decimal(20,2) DEFAULT NULL,
   `복수3` decimal(20,2) DEFAULT NULL,
@@ -56,5 +57,6 @@ CREATE TABLE `railnetbidinfo` (
   `기초금액` decimal(20,2) DEFAULT NULL,
   `공고기관` varchar(45) DEFAULT NULL,
   `수요기관` varchar(45) DEFAULT NULL,
-  `낙찰자선정방법` varchar(100) DEFAULT NULL
+  `낙찰자선정방법` varchar(100) DEFAULT NULL,
+  `실제개찰일시` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

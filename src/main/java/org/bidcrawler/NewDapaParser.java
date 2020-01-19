@@ -558,8 +558,6 @@ public class NewDapaParser extends Parser {
                         rate = header.nextElementSibling().text().replaceAll(" %", "");
                         break;
                     case "사전심사":
-                        prelim = header.nextElementSibling().text();
-                        break;
                     case "복수업체연구개발 대상구분":
                         prelim = header.nextElementSibling().text();
                         break;

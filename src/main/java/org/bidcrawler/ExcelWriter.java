@@ -302,8 +302,8 @@ public class ExcelWriter {
             columnNames.createCell(cellIndex++).setCellValue("계약방법");
             columnNames.createCell(cellIndex++).setCellValue("낙찰자선정방식");
             columnNames.createCell(cellIndex++).setCellValue("낙찰하한율(%)");
-            columnNames.createCell(cellIndex++).setCellValue("");
-            columnNames.createCell(cellIndex++).setCellValue("");
+            columnNames.createCell(cellIndex++).setCellValue("실제개찰일시");
+            columnNames.createCell(cellIndex++).setCellValue("A값");
             columnNames.createCell(cellIndex++).setCellValue("예가방식");
         }
     }
@@ -532,8 +532,10 @@ public class ExcelWriter {
             row.createCell(cellIndex++).setCellValue(rs.getString("계약방법"));
             row.createCell(cellIndex++).setCellValue(rs.getString("낙찰자선정방식"));
             row.createCell(cellIndex++).setCellValue(rs.getString("낙찰하한율"));
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
+            row.createCell(cellIndex++).setCellValue(rs.getString("실제개찰일시"));
+            HSSFCell aPriceCell = (HSSFCell) row.createCell(cellIndex++);
+            aPriceCell.setCellStyle(money);
+            aPriceCell.setCellValue(rs.getLong("A값"));
             row.createCell(cellIndex++).setCellValue(rs.getString("예가방식"));
             index++;
         }

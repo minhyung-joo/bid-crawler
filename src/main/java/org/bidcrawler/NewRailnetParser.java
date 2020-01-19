@@ -8,8 +8,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpResponse;
@@ -171,7 +170,7 @@ public class NewRailnetParser extends Parser
                         String ggChasu = Util.convertToNumeric(linkData[9]);
 
                         Elements itemData = itemRow.getElementsByTag("td");
-                        String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
+                        String bidNum = Util.removeWhitespace(itemData.get(2).text()).substring(0, 14);
                         if (frame != null) {
                             frame.updateInfo(bidNum, false);
                         }
@@ -314,6 +313,7 @@ public class NewRailnetParser extends Parser
         if (spans.size() == 2) {
             String items = ((Element)spans.get(1)).text().replaceAll("[^\\d.-]", "");
             if (Util.isNumeric(items)) {
+                HashMap<String, Boolean> rowMap = new HashMap<>();
                 totalItems = Integer.parseInt(items);
                 int currentItem = 1;
                 Element entryDiv = doc.getElementsByTag("tbody").first();
@@ -331,12 +331,16 @@ public class NewRailnetParser extends Parser
                         Elements itemData = itemRow.getElementsByTag("td");
                         String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
                         String result = Util.removeWhitespace(((Element)itemData.get(6)).text());
-                        if (frame != null) {
-                            frame.updateInfo(bidNum, true);
+                        if (!rowMap.containsKey(bidNum + ggChasu)) {
+                            if (frame != null) {
+                                frame.updateInfo(bidNum, true);
+                            }
+                            if (checkFrame != null) {
+                                checkFrame.updateProgress(threadIndex);
+                            }
                         }
-                        if (checkFrame != null) {
-                            checkFrame.updateProgress(threadIndex);
-                        }
+
+                        rowMap.put(bidNum + ggChasu, true);
 
                         boolean enter = true;
                         String where = "WHERE 공고번호=\"" + bidNum + "\" AND 차수=\"" + ggChasu + "\"";
@@ -348,7 +352,8 @@ public class NewRailnetParser extends Parser
                             String dbResult = "";
                             if (finished != null) {
                                 if (finished.equals("1")) {
-                                    if ((dbResult.equals(result)) || (dbResult.equals("낙찰"))) { enter = false;
+                                    if ((dbResult.equals(result)) || (dbResult.equals("낙찰"))) {
+                                        enter = false;
                                     } else {
                                         sql = "UPDATE railnetbidinfo SET 개찰결과=\"" + result + "\" " + where;
                                         st.executeUpdate(sql);
@@ -400,7 +405,6 @@ public class NewRailnetParser extends Parser
                                 } else {
                                     urlBuilder.append("&mode=B");
                                 }
-
                             }
                             else if (linkData[0].contains("getFailOrReBidDesc")) {
                                 urlBuilder = new StringBuilder();
@@ -417,6 +421,9 @@ public class NewRailnetParser extends Parser
                                 path = urlBuilder.toString();
                                 doc = Jsoup.parse(sendGetRequest(path));
                                 parseResPage(doc, where, path.split("\\?")[1]);
+                            } else {
+                                sql = "UPDATE railnetbidinfo SET 완료=1 " + where;
+                                st.executeUpdate(sql);
                             }
                         }
 
@@ -441,6 +448,7 @@ public class NewRailnetParser extends Parser
 
     public void parseResPage(Document doc, String where, String param) throws SQLException {
         Elements tables = doc.getElementsByTag("table");
+        HashMap<String, String> fields = new HashMap<>();
         String expPrice = "";
         String priceMethod = "";
         String prelim = "";
@@ -459,11 +467,10 @@ public class NewRailnetParser extends Parser
                     rowData = row.getElementsByTag("td");
                     if (!rowData.isEmpty())
                     {
-
-
                         String compResult = Util.removeWhitespace(((Element)rowData.get(6)).text());
                         if ((compResult.equals("낙찰")) || (compResult.equals(""))) {
                             bidPrice = Util.convertToNumeric(((Element)rowData.get(4)).text());
+                            fields.put("투찰금액", bidPrice);
                             break;
                         }
                     }
@@ -475,51 +482,39 @@ public class NewRailnetParser extends Parser
                         switch (header.text()) {
                             case "예가방식":
                                 priceMethod = Util.removeWhitespace(header.nextElementSibling().text());
+                                fields.put("예가방식", "\"" + priceMethod + "\"");
                                 break;
                             case "설계금액":
                                 expPrice = Util.convertToNumeric(header.nextElementSibling().text());
+                                fields.put("설계금액", expPrice);
                                 break;
                             case "계약방법":
                                 bidMethod = Util.removeWhitespace(header.nextElementSibling().text());
+                                fields.put("계약방법", "\"" + bidMethod + "\"");
                                 break;
                             case "심사기준":
                                 prelim = header.nextElementSibling().text();
+                                fields.put("심사기준", "\"" + prelim + "\"");
                                 break;
                             case "낙찰하한율(%)":
                                 rate = Util.removeWhitespace(header.nextElementSibling().text());
+                                fields.put("낙찰하한율", "\"" + rate + "\"");
                                 break;
                             case "개찰일시":
                                 openDate = header.nextElementSibling().text();
+                                fields.put("개찰일시", "\"" + openDate + "\"");
                                 break;
                             case "예정가격":
                                 basePrice = Util.convertToNumeric(header.nextElementSibling().text());
+                                fields.put("예정가격", basePrice);
                         }
-
                     }
                 }
             }
         }
 
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("UPDATE railnetbidinfo SET ");
-        if (!expPrice.equals("")) {
-            sqlBuilder.append("설계금액=" + expPrice + ", ");
-        }
-        if (!basePrice.equals("")) {
-            sqlBuilder.append("예정가격=" + basePrice + ", ");
-        }
-        if (!bidPrice.equals("")) {
-            sqlBuilder.append("투찰금액=" + bidPrice + ", ");
-        }
-        sqlBuilder.append("예가방식=\"" + priceMethod + "\", ");
-        sqlBuilder.append("계약방법=\"" + bidMethod + "\", ");
-        sqlBuilder.append("심사기준=\"" + prelim + "\", ");
-        sqlBuilder.append("낙찰하한율=\"" + rate + "\", ");
-        sqlBuilder.append("개찰일시=\"" + openDate + "\", ");
-        sqlBuilder.append("공고기관=\"한국철도시설공단\", ");
-        sqlBuilder.append("수요기관=\"한국철도시설공단\", ");
-        sqlBuilder.append("완료=1 ");
-        sqlBuilder.append(where);
+        fields.put("공고기관", "\"한국철도시설공단\"");
+        fields.put("수요기관", "\"한국철도시설공단\"");
 
         if (!doc.getElementsContainingOwnText("예비가격 추첨현황").isEmpty()) {
             StringBuilder urlBuilder = new StringBuilder();
@@ -528,7 +523,7 @@ public class NewRailnetParser extends Parser
             urlBuilder.append(param);
             String path = urlBuilder.toString();
             Document pricePage = Jsoup.parse(sendGetRequest(path));
-            parsePriceInfoPage(pricePage, where);
+            parsePriceInfoPage(pricePage, fields);
         }
 
         if (!doc.getElementsContainingText("예정가격 추첨조서").isEmpty()) {
@@ -538,15 +533,28 @@ public class NewRailnetParser extends Parser
             urlBuilder.append(param);
             String path = urlBuilder.toString();
             Document compPage = Jsoup.parse(sendGetRequest(path));
-            parsePriceCompPage(compPage, where);
+            parsePriceCompPage(compPage, fields);
         }
 
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("UPDATE railnetbidinfo SET ");
+        Iterator it = fields.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            sqlBuilder.append(pair.getKey());
+            sqlBuilder.append("=");
+            sqlBuilder.append(pair.getValue());
+            sqlBuilder.append(", ");
+        }
+
+        sqlBuilder.append("완료=1 ");
+        sqlBuilder.append(where);
         String sql = sqlBuilder.toString();
         System.out.println(sql);
         st.executeUpdate(sql);
     }
 
-    public void parsePriceInfoPage(Document doc, String where) throws SQLException {
+    public void parsePriceInfoPage(Document doc, HashMap<String, String> fields) {
         Elements tables = doc.getElementsByTag("table");
         Elements priceRows;
         for (Element table : tables) {
@@ -562,40 +570,26 @@ public class NewRailnetParser extends Parser
                         String index = Util.convertToNumeric(priceRow.getElementsByTag("th").first().text());
                         if (!index.equals("")) {
                             String price = Util.convertToNumeric(priceRow.getElementsByTag("td").first().text());
-                            sqlBuilder.append("복수" + index + "=" + price + ", ");
+                            fields.put("복수" + index, price);
                         }
                     }
                 }
-
-                sqlBuilder.deleteCharAt(sqlBuilder.length() - 2);
-                sqlBuilder.append(where);
-                String sql = sqlBuilder.toString();
-                System.out.println(sql);
-                st.executeUpdate(sql);
             } else {
                 Elements headers = table.getElementsByTag("th");
                 for (Element header : headers)
                     if (header.text().equals("예비가격 기초금액")) {
                         String basePrice = Util.convertToNumeric(header.nextElementSibling().text());
-                        StringBuilder sqlBuilder = new StringBuilder();
-                        sqlBuilder.append("UPDATE railnetbidinfo SET ");
-                        sqlBuilder.append("기초금액=" + basePrice + " ");
-                        sqlBuilder.append(where);
-                        String sql = sqlBuilder.toString();
-                        System.out.println(sql);
-                        st.executeUpdate(sql);
+                        fields.put("기초금액", basePrice);
                         break;
                     }
             }
         }
     }
 
-    public void parsePriceCompPage(Document doc, String where) throws SQLException {
+    public void parsePriceCompPage(Document doc, HashMap<String, String> fields) {
         Elements tables = doc.getElementsByTag("table");
         for (Element table : tables) {
             if (!table.getElementsContainingText("예비가격 추첨횟수").isEmpty()) {
-                StringBuilder sqlBuilder = new StringBuilder();
-                sqlBuilder.append("UPDATE railnetbidinfo SET ");
                 Elements compRows = table.getElementsByTag("tr");
                 int total = 0;
                 for (Element compRow : compRows) {
@@ -606,17 +600,27 @@ public class NewRailnetParser extends Parser
                             String index = Util.convertToNumeric(((Element)indices.get(i)).text());
                             String count = Util.convertToNumeric(((Element)counts.get(i)).text());
                             total += Integer.parseInt(count);
-                            sqlBuilder.append("복참" + index + "=" + count + ", ");
+                            fields.put("복참" + index, count);
                         }
                     }
                 }
 
                 total /= 2;
-                sqlBuilder.append("참가수=" + total + " ");
-                sqlBuilder.append(where);
-                String sql = sqlBuilder.toString();
-                System.out.println(sql);
-                st.executeUpdate(sql);
+                fields.put("참가수", total + "");
+            }
+            if (!table.getElementsContainingText("개찰일시").isEmpty()) {
+                Elements headers = table.getElementsByTag("th");
+                for (Element header : headers) {
+                    switch (header.text()) {
+                        case "개찰일시":
+                            String openDate = header.nextElementSibling().text();
+                            if (openDate.length() == 16) {
+                                fields.put("실제개찰일시", "\"" + openDate + "\"");
+                            }
+
+                            break;
+                    }
+                }
             }
         }
     }
@@ -634,9 +638,38 @@ public class NewRailnetParser extends Parser
         Element countDiv = doc.getElementsByClass("grid_count").first();
         Elements spans = countDiv.getElementsByTag("span");
         if (spans.size() == 2) {
-            String items = ((Element)spans.get(1)).text().replaceAll("[^\\d.-]", "");
+            String items = spans.get(1).text().replaceAll("[^\\d.-]", "");
             if (Util.isNumeric(items)) {
-                return Integer.parseInt(items);
+                HashMap<String, Boolean> rowMap = new HashMap<>();
+                totalItems = Integer.parseInt(items);
+                int currentItem = 1;
+                Element entryDiv = doc.getElementsByTag("tbody").first();
+                Elements itemRows = entryDiv.getElementsByTag("tr");
+                while (currentItem <= totalItems) {
+                    for (Element itemRow : itemRows) {
+                        String link = itemRow.attr("onclick");
+                        String[] linkData = link.split("'");
+                        String ggChasu = linkData[7];
+                        Elements itemData = itemRow.getElementsByTag("td");
+                        String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
+                        rowMap.put(bidNum + ggChasu, true);
+                        currentItem++;
+                    }
+
+                    if ((currentItem % 10 == 1) && (currentItem <= totalItems)) {
+                        page++;
+                        path = RES_LIST;
+                        urlParameters.clear();
+                        urlParameters.add(new BasicNameValuePair("fromDate", startDate));
+                        urlParameters.add(new BasicNameValuePair("endDate", endDate));
+                        urlParameters.add(new BasicNameValuePair("pageIndex", page + ""));
+                        doc = Jsoup.parse(sendPostRequest(path, urlParameters));
+                        entryDiv = doc.getElementsByTag("tbody").first();
+                        itemRows = entryDiv.getElementsByTag("tr");
+                    }
+                }
+
+                return rowMap.size();
             }
         }
 
