@@ -852,6 +852,7 @@ public class NewDapaParser extends Parser {
             for (Element infoDiv : infoDivs) {
                 Elements headers = infoDiv.getElementsByTag("th");
                 for (Element header : headers) {
+                    System.out.println(header.text());
                     if (header.text().equals("예정가격")) {
                         expPrice = header.nextElementSibling().text();
                         expPrice = expPrice.replaceAll("[^\\.0123456789]","");

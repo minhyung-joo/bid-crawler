@@ -48,5 +48,6 @@ CREATE TABLE `letsrunbidinfo` (
   `완료` int(11) DEFAULT '0',
   `공고` int(11) DEFAULT NULL,
   `사업장` varchar(20) DEFAULT NULL,
+  `A값` decimal(20,2) DEFAULT NULL,
   PRIMARY KEY (`공고번호`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

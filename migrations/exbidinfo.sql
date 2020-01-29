@@ -52,5 +52,6 @@ CREATE TABLE `exbidinfo` (
   `공고상태` varchar(10) DEFAULT NULL,
   `결과상태` varchar(10) DEFAULT NULL,
   `중복번호` varchar(10) DEFAULT NULL,
+  `A값` decimal(20,2) DEFAULT NULL,
   KEY `index` (`공고번호`,`중복번호`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

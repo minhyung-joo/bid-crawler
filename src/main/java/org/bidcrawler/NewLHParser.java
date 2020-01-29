@@ -224,6 +224,11 @@ public class NewLHParser
     }
 
     public void parseItemPage(Document itemPage, String where) throws SQLException {
+        Elements licenses = itemPage.getElementsContainingOwnText("요구면허");
+        if (!licenses.isEmpty()) {
+            System.out.println(licenses.get(0).html());
+        }
+
         Elements headers = itemPage.getElementsByTag("th");
 
         boolean hasBase = false;
@@ -255,9 +260,14 @@ public class NewLHParser
             }
         }
 
-        String sql = "UPDATE lhbidinfo SET 업종유형=\"" + (String)info.get("업종유형") + "\", 입찰방법=\"" + (String)info.get("입찰방법") + "\", 입찰방식=\"" + (String)info.get("입찰방식") + "\", 낙찰자선정방법=\"" + (String)info.get("낙찰자선정방법") + "\", 재입찰=\"재입찰 없음\", 개찰일시=\"" + (String)info.get("개찰일시") + "\", ";
-        if (hasBase) sql = sql + "기초금액=" + (String)info.get("기초금액") + ", "; else
-            sql = sql + "기초금액=" + (String)info.get("설계가격") + ", ";
+        String sql = "UPDATE lhbidinfo SET 업종유형=\"" + info.get("업종유형") + "\", 입찰방법=\"" + info.get("입찰방법") + "\", 입찰방식=\"" + info.get("입찰방식") + "\", 낙찰자선정방법=\"" + info.get("낙찰자선정방법") + "\", 재입찰=\"재입찰 없음\", 개찰일시=\"" + info.get("개찰일시") + "\", ";
+        if (hasBase) {
+            sql = sql + "기초금액=" + info.get("기초금액") + ", ";
+        }
+        else {
+            sql = sql + "기초금액=" + info.get("설계가격") + ", ";
+        }
+
         sql = sql + "공고=1 " + where;
 
         System.out.println(sql);

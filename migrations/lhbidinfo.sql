@@ -55,5 +55,7 @@ CREATE TABLE `lhbidinfo` (
   `공고` int(11) DEFAULT NULL,
   `기존예정가격` bigint(20) DEFAULT NULL,
   `공고현황` varchar(20) DEFAULT NULL,
+  `A값` decimal(20,2) DEFAULT NULL,
+  `요구면허` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`공고번호`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
