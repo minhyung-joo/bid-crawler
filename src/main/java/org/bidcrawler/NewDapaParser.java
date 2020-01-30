@@ -2,6 +2,7 @@ package org.bidcrawler;
 
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.http.Header;
+import org.apache.poi.util.SystemOutLogger;
 import org.bidcrawler.utils.Util;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -843,6 +844,7 @@ public class NewDapaParser extends Parser {
         String lowerBound = ""; // 하한
         String upperBound = ""; // 상한
         String prelim = "비대상"; // 사전심사
+        String realOpenDate = null; // 실제개찰일시
 
         /*
          * Getting the result details, including 공고번호, 개찰일시, and 입찰결과
@@ -879,6 +881,14 @@ public class NewDapaParser extends Parser {
                     if (header.text().equals("사전심사")) {
                         prelim = header.nextElementSibling().text();
                         prelim = prelim.trim().replaceAll("\\s+", "");
+                    }
+                    if (header.text().contains("개찰일시")) {
+                        realOpenDate = header.nextElementSibling().text();
+                        if (realOpenDate.contains("(")) {
+                            realOpenDate = realOpenDate.split("\\(")[1].substring(0, 16);
+                        } else {
+                            realOpenDate = null;
+                        }
                     }
                 }
             }
@@ -922,6 +932,9 @@ public class NewDapaParser extends Parser {
         }
         if (companies != null && Util.isNumeric(companies)) {
             sqlBuilder.append("참여수=" + companies + ", ");
+        }
+        if (realOpenDate != null && realOpenDate.length() == 16) {
+            sqlBuilder.append("실제개찰일시=\"" + realOpenDate + "\", ");
         }
         if (entry.bidInfo.get("resultNm").equals("유찰")) {
             sqlBuilder.append("완료=1, ");

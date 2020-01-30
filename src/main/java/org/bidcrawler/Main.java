@@ -21,7 +21,6 @@ public class Main extends JFrame {
     private JButton settingMenu;
     private JTabbedPane tabbedPane;
     private JComponent dataPanel;
-    private JComponent negoPanel;
     private JComponent updatePanel;
 
     public Main() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, URISyntaxException {
@@ -68,11 +67,9 @@ public class Main extends JFrame {
         tabbedPane = new JTabbedPane();
 
         dataPanel = new DataPanel("BID");
-        negoPanel = new DataPanel("NEGO");
         updatePanel = new UpdatePanel();
 
         tabbedPane.addTab("데이터 조회", dataPanel);
-        tabbedPane.addTab("협상건 조회", negoPanel);
         tabbedPane.addTab("업데이트 센터", updatePanel);
     }
 

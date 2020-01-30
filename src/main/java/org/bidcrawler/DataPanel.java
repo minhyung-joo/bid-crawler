@@ -60,6 +60,7 @@ public class DataPanel extends JPanel {
             String site = siteDrop.getSelectedItem().toString();
             for (int i = 0; i < 10; i++) {
                 searchPanels.get(i).changeWork(site);
+                searchPanels.get(i).changeType(site);
             }
         });
         optionPanel.add(new JLabel("사이트 : "));
@@ -126,6 +127,7 @@ public class DataPanel extends JPanel {
 
     private class SearchOptionPanel extends JPanel {
 
+        JComboBox typeDrop;
         JComboBox workDrop;
         JTextField orgInput;
         JButton orgSearch;
@@ -140,7 +142,12 @@ public class DataPanel extends JPanel {
 
         public SearchOptionPanel() {
             super();
+            typeDrop = new JComboBox();
+            DefaultComboBoxModel typeModel = new DefaultComboBoxModel(Util.DAPA_TYPES);
+            typeDrop.setModel(typeModel);
             workDrop = new JComboBox();
+            DefaultComboBoxModel workModel = new DefaultComboBoxModel(Util.DAPA_WORKS);
+            workDrop.setModel(workModel);
             orgInput = new JTextField(15);
             orgSearch = new JButton("검색");
             orgSearch.addActionListener(new OrgListener());
@@ -160,6 +167,8 @@ public class DataPanel extends JPanel {
             excelButton.addActionListener(new ExcelListener());
 
             this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+            this.add(new JLabel("입찰 : "));
+            this.add(typeDrop);
             this.add(new JLabel("구분 : "));
             this.add(workDrop);
             JLabel o = new JLabel("발주기관 : ");
@@ -198,6 +207,18 @@ public class DataPanel extends JPanel {
             else if (site.equals("도로공사")) {
                 DefaultComboBoxModel model = new DefaultComboBoxModel(Util.EX_WORKS);
                 workDrop.setModel(model);
+            }
+            else if (site.equals("국방조달청")) {
+                DefaultComboBoxModel model = new DefaultComboBoxModel(Util.DAPA_WORKS);
+                workDrop.setModel(model);
+            }
+        }
+
+        public void changeType(String site) {
+            typeDrop.removeAllItems();
+            if (site.equals("국방조달청")) {
+                DefaultComboBoxModel model = new DefaultComboBoxModel(Util.DAPA_TYPES);
+                typeDrop.setModel(model);
             }
         }
 
@@ -468,9 +489,13 @@ public class DataPanel extends JPanel {
                         }
                     }
 
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    ExcelWriter ew = new ExcelWriter(site, "입찰");
-                    ew.setOptions(sd, ed, org, workType, lowerBound, upperBound);
+                    ExcelWriter ew = new ExcelWriter(site);
+                    if (typeDrop.getSelectedItem().toString().equals("경쟁") || typeDrop.getSelectedItem().toString().equals("협상")) {
+                        ew.setOptions(sd, ed, org, workType, lowerBound, upperBound, typeDrop.getSelectedItem().toString());
+                    } else {
+                        ew.setOptions(sd, ed, org, workType, lowerBound, upperBound, null);
+                    }
+
                     ew.toExcel();
                 } catch (Exception ex) {
                     Logger.getGlobal().log(Level.WARNING, ex.getMessage(), ex);

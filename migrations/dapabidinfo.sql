@@ -62,5 +62,6 @@ CREATE TABLE `dapabidinfo` (
   `하한` decimal(5,2) DEFAULT NULL,
   `통합참조번호` varchar(255) DEFAULT NULL,
   `A값` decimal(20,2) DEFAULT NULL,
+  `실제개찰일시` datetime DEFAULT NULL,
   UNIQUE KEY `search index` (`공고번호`,`차수`,`공사번호`,`항목번호`,`연도`,`통합참조번호`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

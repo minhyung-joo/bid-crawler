@@ -17,6 +17,9 @@ public class Util {
     public static String[] COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법" };
     public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "철도시설공단" };
 
+    public static String[] DAPA_TYPES = { "전체", "경쟁", "협상" };
+
+    public static String[] DAPA_WORKS = { "전체", "시설공사", "용역", "물품" };
     public static String[] LH_WORKS = { "전체", "시설공사", "용역", "물품", "지급자재" };
     public static String[] LETS_WORKS = { "전체", "시설공사", "기술용역", "물품구매", "일반용역" };
     public static String[] EX_WORKS = { "전체", "공사", "용역", "물품" };

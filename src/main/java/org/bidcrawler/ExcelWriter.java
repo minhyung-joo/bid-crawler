@@ -38,7 +38,6 @@ public class ExcelWriter {
     String basePath;
     String filePath;
     String site;
-    String op;
     Workbook workbook;
     Sheet sheet;
     HSSFCellStyle money;
@@ -51,13 +50,13 @@ public class ExcelWriter {
     String workType;
     String lowerBound;
     String upperBound;
+    String bidType;
     int rowIndex = 1;
 
-    public ExcelWriter(String site, String op) {
+    public ExcelWriter(String site) {
         defaultPath = "F:/";
         basePath = Util.BASE_PATH;
         this.site = site;
-        this.op = op;
         workbook = new HSSFWorkbook();
         sheet = workbook.createSheet("입찰정보");
         money = (HSSFCellStyle) workbook.createCellStyle();
@@ -69,18 +68,19 @@ public class ExcelWriter {
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-        ExcelWriter tester = new ExcelWriter("국방조달청", "입찰");
+        ExcelWriter tester = new ExcelWriter("국방조달청");
 
         tester.lhBidToExcel();
     }
 
-    public void setOptions(String sd, String ed, String org, String workType, String lowerBound, String upperBound) {
+    public void setOptions(String sd, String ed, String org, String workType, String lowerBound, String upperBound, String bidType) {
         this.sd = sd;
         this.ed = ed;
         this.org = org;
         this.workType = workType;
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
+        this.bidType = bidType;
     }
 
     public void toExcel() throws ClassNotFoundException, SQLException, IOException {
@@ -88,12 +88,7 @@ public class ExcelWriter {
             lhBidToExcel();
         }
         else if (site.equals("국방조달청")) {
-            if (op.equals("입찰")) {
-                dapaBidToExcel();
-            }
-            else if (op.equals("협상")) {
-                dapaNegoToExcel();
-            }
+            dapaBidToExcel();
         }
         else if (site.equals("한국마사회")) {
             letsrunBidToExcel();
@@ -142,7 +137,11 @@ public class ExcelWriter {
         else if (site.equals("LH공사") || site.equals("한국마사회")) columnNames.createCell(cellIndex++).setCellValue("공고번호");
         else if (site.equals("철도공사")) columnNames.createCell(cellIndex++).setCellValue("공고번호(차수)");
 
-        columnNames.createCell(cellIndex++).setCellValue("개찰일시");
+        if (site.equals("국방조달청")) {
+            columnNames.createCell(cellIndex++).setCellValue("실제개찰일시");
+        } else {
+            columnNames.createCell(cellIndex++).setCellValue("개찰일시");
+        }
 
         if (site.equals("도로공사") || site.equals("철도시설공단")) columnNames.createCell(cellIndex++).setCellValue("업종제한사항");
         else if (site.equals("LH공사")) columnNames.createCell(cellIndex++).setCellValue("요구면허");
@@ -241,42 +240,22 @@ public class ExcelWriter {
             columnNames.createCell(cellIndex++).setCellValue("입찰방식");
         }
         else if (site.equals("국방조달청")) {
-            if (op.equals("입찰")) {
+                columnNames.createCell(cellIndex++).setCellValue("개찰일시");
+                columnNames.createCell(cellIndex++).setCellValue("입찰서제출마감일시");
+                columnNames.createCell(cellIndex++).setCellValue("입찰구분공고구분");
                 columnNames.createCell(cellIndex++).setCellValue("발주기관");
                 columnNames.createCell(cellIndex++).setCellValue("계약방법");
                 columnNames.createCell(cellIndex++).setCellValue("입찰방법");
                 columnNames.createCell(cellIndex++).setCellValue("기초예가적용여부");
                 columnNames.createCell(cellIndex++).setCellValue("사전심사");
                 columnNames.createCell(cellIndex++).setCellValue("낙찰자결정방법");
-                columnNames.createCell(cellIndex++).setCellValue("입찰서제출 마감일시");
+                columnNames.createCell(cellIndex++).setCellValue("입찰서제출마감일시");
                 columnNames.createCell(cellIndex++).setCellValue("낙찰하한율");
                 columnNames.createCell(cellIndex++).setCellValue("");
                 columnNames.createCell(cellIndex++).setCellValue("");
                 columnNames.createCell(cellIndex++).setCellValue("");
                 columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
                 columnNames.createCell(cellIndex++).setCellValue("사정률");
-            }
-            else if (op.equals("협상")) {
-                columnNames.createCell(cellIndex++).setCellValue("발주기관");
-                columnNames.createCell(cellIndex++).setCellValue("낙찰자결정방법");
-                columnNames.createCell(cellIndex++).setCellValue("입찰방법");
-                columnNames.createCell(cellIndex++).setCellValue("기초예가적용여부");
-                columnNames.createCell(cellIndex++).setCellValue("견적서제출마감일시");
-                columnNames.createCell(cellIndex++).setCellValue("협상형태");
-                columnNames.createCell(cellIndex++).setCellValue("공개협상결과");
-                columnNames.createCell(cellIndex++).setCellValue("낙찰하한율");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("");
-                columnNames.createCell(cellIndex++).setCellValue("사정률");
-            }
         }
         else if (site.equals("철도공사")) {
             columnNames.createCell(cellIndex++).setCellValue("투찰종료일시");
@@ -339,8 +318,7 @@ public class ExcelWriter {
 
         if (workType == null) {
             if (site.equals("국방조달청")) {
-                if (op.equals("입찰")) name += "(경쟁)";
-                else if (op.equals("협상")) name += "(수의)";
+                name += "(경쟁)";
             }
             else name += "(전체)";
         }
@@ -1329,9 +1307,15 @@ public class ExcelWriter {
             cellIndex = 0;
             row.createCell(cellIndex++).setCellValue(index++);
             row.createCell(cellIndex++).setCellValue(rs.getString("공고번호") + "-" + rs.getInt("차수"));
-            String od = rs.getString("개찰일시");
-            od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
-            row.createCell(cellIndex++).setCellValue(od);
+            if (rs.getString("실제개찰일시") != null) {
+                String dd = rs.getString("실제개찰일시");
+                if (dd.length() > 1) dd = dd.substring(2,4) + dd.substring(5,7) + dd.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(dd);
+            } else {
+                String od = rs.getString("개찰일시");
+                od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(od);
+            }
             row.createCell(cellIndex++).setCellValue(rs.getString("면허명칭"));
             HSSFCell basePriceCell = (HSSFCell) row.createCell(cellIndex++);
             basePriceCell.setCellStyle(money);
@@ -1436,6 +1420,16 @@ public class ExcelWriter {
             dupComCell15.setCellStyle(money);
             dupComCell15.setCellValue(rs.getLong("복참15"));
             row.createCell(cellIndex++).setCellValue(rs.getInt("참여수"));
+            String od = rs.getString("개찰일시");
+            od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
+            row.createCell(cellIndex++).setCellValue(od);
+            if (rs.getString("견적서제출마감일시") != null) {
+                String dd = rs.getString("견적서제출마감일시");
+                if (dd.length() > 1) dd = dd.substring(2,4) + dd.substring(5,7) + dd.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(dd);
+            }
+            else row.createCell(cellIndex++).setCellValue("-");
+            row.createCell(cellIndex++).setCellValue(rs.getString("협상형태"));
             row.createCell(cellIndex++).setCellValue(rs.getString("발주기관"));
             row.createCell(cellIndex++).setCellValue(rs.getString("낙찰자결정방법"));
             row.createCell(cellIndex++).setCellValue(rs.getString("입찰방법"));
@@ -1452,9 +1446,6 @@ public class ExcelWriter {
             lbound = lbound.replaceAll("[^\\d.]", "");
             if (!lbound.equals("")) lbound += "%";
             row.createCell(cellIndex++).setCellValue(lbound);
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
@@ -1485,6 +1476,12 @@ public class ExcelWriter {
             String rate = lowerBound + " ~ " + upperBound;
             sql += "사정률=\"" + rate + "\" AND ";
         }
+        if (workType != null) {
+            sql += "분류=\"" + workType + "\" AND ";
+        }
+        if (bidType != null) {
+            sql += "입찰종류=\"" + bidType + "\" AND ";
+        }
         sql += "완료=1 ";
 
         // Add unopened bids
@@ -1494,6 +1491,12 @@ public class ExcelWriter {
         }
         if ((lowerBound != null) && (upperBound != null)) {
             sql += "하한=\"" + lowerBound + "\" AND 상한=\"" + upperBound + "\" AND ";
+        }
+        if (workType != null) {
+            sql += "분류=\"" + workType + "\" AND ";
+        }
+        if (bidType != null) {
+            sql += "입찰종류=\"" + bidType + "\" AND ";
         }
         sql += "개찰일시 >=\"" + today + "\" ORDER BY 개찰일시, 공고번호";
 
@@ -1508,9 +1511,15 @@ public class ExcelWriter {
             cellIndex = 0;
             row.createCell(cellIndex++).setCellValue(index++);
             row.createCell(cellIndex++).setCellValue(rs.getString("공고번호") + "-" + rs.getInt("차수"));
-            String od = rs.getString("개찰일시");
-            od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
-            row.createCell(cellIndex++).setCellValue(od);
+            if (rs.getString("실제개찰일시") != null) {
+                String dd = rs.getString("실제개찰일시");
+                if (dd.length() > 1) dd = dd.substring(2,4) + dd.substring(5,7) + dd.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(dd);
+            } else {
+                String od = rs.getString("개찰일시");
+                od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(od);
+            }
             row.createCell(cellIndex++).setCellValue(rs.getString("면허명칭"));
             HSSFCell basePriceCell = (HSSFCell) row.createCell(cellIndex++);
             basePriceCell.setCellStyle(money);
@@ -1615,6 +1624,20 @@ public class ExcelWriter {
             dupComCell15.setCellStyle(money);
             dupComCell15.setCellValue(rs.getLong("복참15"));
             row.createCell(cellIndex++).setCellValue(rs.getInt("참여수"));
+            String od = rs.getString("개찰일시");
+            od = od.substring(2,4) + od.substring(5,7) + od.substring(8,16);
+            row.createCell(cellIndex++).setCellValue(od);
+            if (rs.getString("입찰서제출마감일시") != null) {
+                String dd = rs.getString("입찰서제출마감일시");
+                if (dd.length() > 1) dd = dd.substring(2,4) + dd.substring(5,7) + dd.substring(8,16);
+                row.createCell(cellIndex++).setCellValue(dd);
+            }
+            else row.createCell(cellIndex++).setCellValue("-");
+            if (rs.getString("입찰종류") == "경쟁") {
+                row.createCell(cellIndex++).setCellValue(rs.getString("입찰종류") + "입찰" + rs.getString("공고종류"));
+            } else {
+                row.createCell(cellIndex++).setCellValue(rs.getString("입찰종류"));
+            }
             row.createCell(cellIndex++).setCellValue(rs.getString("발주기관"));
             row.createCell(cellIndex++).setCellValue(rs.getString("계약방법"));
             row.createCell(cellIndex++).setCellValue(rs.getString("입찰방법"));
@@ -1632,9 +1655,6 @@ public class ExcelWriter {
             if (!lbound.equals("")) lbound += "%";
             else lbound = "-";
             row.createCell(cellIndex++).setCellValue(lbound);
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
