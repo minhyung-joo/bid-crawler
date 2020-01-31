@@ -28,10 +28,14 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellAddress;
 import org.bidcrawler.utils.*;
 
+import javax.sql.rowset.CachedRowSet;
+
 public class ExcelWriter {
     Connection con;
     java.sql.Statement st;
     ResultSet rs;
+    String sql;
+    CachedRowSet cachedRowSet;
 
     String name;
     String defaultPath;
@@ -53,10 +57,12 @@ public class ExcelWriter {
     String bidType;
     int rowIndex = 1;
 
-    public ExcelWriter(String site) {
+    public ExcelWriter(String site, String sql, CachedRowSet cachedRowSet) {
+        this.sql = sql;
+        this.cachedRowSet = cachedRowSet;
+        this.site = site;
         defaultPath = "F:/";
         basePath = Util.BASE_PATH;
-        this.site = site;
         workbook = new HSSFWorkbook();
         sheet = workbook.createSheet("입찰정보");
         money = (HSSFCellStyle) workbook.createCellStyle();
@@ -68,19 +74,9 @@ public class ExcelWriter {
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-        ExcelWriter tester = new ExcelWriter("국방조달청");
+        ExcelWriter tester = new ExcelWriter("국방조달청", null, null);
 
         tester.lhBidToExcel();
-    }
-
-    public void setOptions(String sd, String ed, String org, String workType, String lowerBound, String upperBound, String bidType) {
-        this.sd = sd;
-        this.ed = ed;
-        this.org = org;
-        this.workType = workType;
-        this.lowerBound = lowerBound;
-        this.upperBound = upperBound;
-        this.bidType = bidType;
     }
 
     public void toExcel() throws ClassNotFoundException, SQLException, IOException {
@@ -297,41 +293,22 @@ public class ExcelWriter {
 
     public void toFile() throws IOException {
         name = "";
-        if (org != null) { name += org + " "; }
-
-        if (site.equals("도로공사")) {
-            name = "한국도로공사";
-            if (org != null) {
-                name += " " + org;
-            }
-        }
-        else if (site.equals("LH공사") && org != null) {
-            if (org.equals("본 사")) org = "본사";
-            name = "한국토지주택공사 " + org;
-        }
-        else if (site.equals("LH공사")) {
-            name = "한국토지주택공사 ";
-        }
-        else if (site.equals("국방조달청") && org != null) { name = org; }
-        else if (site.equals("한국마사회") && org != null) { name = site + " " + org; }
-        else name += site;
-
-        if (workType == null) {
-            if (site.equals("국방조달청")) {
-                name += "(경쟁)";
-            }
-            else name += "(전체)";
-        }
-        else {
-            if (workType.equals("시설공사")) { name += "(공사)"; }
-            else if (workType.equals("기술용역")) { name += "(기술)"; }
-            else if (workType.equals("물품구매")) { name += "(물품)"; }
-            else if (workType.equals("일반용역")) { name += "(일반)"; }
-            else { name += "(" + workType + ")"; }
-        }
-
-        if (lowerBound != null && upperBound != null) {
-            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        switch (site) {
+            case "국방조달청":
+                nameDapaFile();
+                break;
+            case "LH공사":
+                nameLhFile();
+                break;
+            case "도로공사":
+                nameExFile();
+                break;
+            case "한국마사회":
+                nameLetsrunFile();
+                break;
+            case "철도시설공단":
+                nameRailnetFile();
+                break;
         }
 
         int fi = 2;
@@ -362,6 +339,114 @@ public class ExcelWriter {
         fos.close();
     }
 
+    private void nameRailnetFile() {
+        name += site;
+        if (workType == null) {
+            name += "(전체)";
+        }
+        else {
+            name += "(" + workType + ")";
+        }
+
+        if (lowerBound != null && upperBound != null) {
+            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        }
+    }
+
+    private void nameExFile() {
+        name = "한국도로공사";
+        if (org != null) {
+            name += " " + org;
+        }
+
+        if (workType == null) {
+            name += "(전체)";
+        }
+        else {
+            if (workType.equals("시설공사")) { name += "(공사)"; }
+            else if (workType.equals("기술용역")) { name += "(기술)"; }
+            else if (workType.equals("물품구매")) { name += "(물품)"; }
+            else if (workType.equals("일반용역")) { name += "(일반)"; }
+            else { name += "(" + workType + ")"; }
+        }
+
+        if (lowerBound != null && upperBound != null) {
+            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        }
+    }
+
+    private void nameLhFile() {
+        name = "한국토지주택공사";
+        if (org != null) {
+            name += " " + org;
+        }
+
+        if (workType == null) {
+            name += "(전체)";
+        }
+        else {
+            if (workType.equals("시설공사")) { name += "(공사)"; }
+            else if (workType.equals("기술용역")) { name += "(기술)"; }
+            else if (workType.equals("물품구매")) { name += "(물품)"; }
+            else if (workType.equals("일반용역")) { name += "(일반)"; }
+            else { name += "(" + workType + ")"; }
+        }
+
+        if (lowerBound != null && upperBound != null) {
+            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        }
+    }
+
+    private void nameLetsrunFile() {
+        name = "한국마사회";
+        if (org != null) {
+            name += " " + org;
+        }
+
+        if (workType == null) {
+            name += "(전체)";
+        }
+        else {
+            if (workType.equals("시설공사")) { name += "(공사)"; }
+            else if (workType.equals("기술용역")) { name += "(기술)"; }
+            else if (workType.equals("물품구매")) { name += "(물품)"; }
+            else if (workType.equals("일반용역")) { name += "(일반)"; }
+            else { name += "(" + workType + ")"; }
+        }
+
+        if (lowerBound != null && upperBound != null) {
+            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        }
+    }
+
+    private void nameDapaFile() {
+        name = "국방조달청";
+        if (org != null) {
+            name += " " + org;
+        }
+
+        if (bidType == null) {
+            name += "(전체) ";
+        } else {
+            name += "(" + bidType + ") ";
+        }
+
+        if (workType == null) {
+            name += "(전체)";
+        }
+        else {
+            if (workType.equals("시설공사")) { name += "(공사)"; }
+            else if (workType.equals("기술용역")) { name += "(기술)"; }
+            else if (workType.equals("물품구매")) { name += "(물품)"; }
+            else if (workType.equals("일반용역")) { name += "(일반)"; }
+            else { name += "(" + workType + ")"; }
+        }
+
+        if (lowerBound != null && upperBound != null) {
+            name += String.format("-%.2f~%.2f", Double.parseDouble(upperBound), Double.parseDouble(lowerBound));
+        }
+    }
+
     public void naraBidToExcel() throws ClassNotFoundException, SQLException, IOException {
         connectDB();
 
@@ -374,21 +459,11 @@ public class ExcelWriter {
         connectDB();
 
         labelColumns();
-
-        String sql = "SELECT * FROM railnetbidinfo WHERE ";
-        if ((sd != null) && (ed != null)) {
-            sql += "개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ";
+        if (cachedRowSet == null) {
+            rs = st.executeQuery(sql);
+        } else {
+            rs = cachedRowSet.getOriginal();
         }
-        if (sd == null && ed == null) {
-            sql += "개찰일시 >= \"2016-01-01 00:00:00\" AND ";
-        }
-        sql += "완료=1 ";
-
-        sql += "UNION SELECT * FROM railnetbidinfo WHERE ";
-        sql += "개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호;";
-
-        System.out.println(sql);
-        rs = st.executeQuery(sql);
 
         int cellIndex = 0;
         int index = 1;
@@ -730,32 +805,11 @@ public class ExcelWriter {
 
         labelColumns();
 
-        String sql = "SELECT * FROM exbidinfo WHERE ";
-        if ((sd != null) && (ed != null)) {
-            sql += "개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ";
+        if (cachedRowSet == null) {
+            rs = st.executeQuery(sql);
+        } else {
+            rs = cachedRowSet.getOriginal();
         }
-        if (sd == null && ed == null) {
-            sql += "개찰일시 >= \"2016-01-01 00:00:00\" AND ";
-        }
-        if (org != null) {
-            sql += "지역=\"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "분류=\"" + workType + "\" AND ";
-        }
-        sql += "완료=1 ";
-
-        sql += "UNION SELECT * FROM exbidinfo WHERE ";
-        if (org != null) {
-            sql += "지역=\"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "분류=\"" + workType + "\" AND ";
-        }
-        sql += "개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호;";
-
-        System.out.println(sql);
-        rs = st.executeQuery(sql);
 
         int cellIndex = 0;
         int index = 1;
@@ -909,31 +963,13 @@ public class ExcelWriter {
 
         labelColumns();
 
-        String sql = "SELECT * FROM lhbidinfo WHERE ";
-        if ((sd != null) && (ed != null)) {
-            sql += "개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ";
+        if (cachedRowSet == null) {
+            rs = st.executeQuery(sql);
+        } else {
+            System.out.println("getting original");
+            rs = cachedRowSet.getOriginal();
+            System.out.println("got original");
         }
-        if (sd == null && ed == null) {
-            sql += "개찰일시 >= \"2016-01-01 00:00:00\" AND ";
-        }
-        if (org != null) {
-            sql += "지역본부 = \"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "업무=\"" + workType + "\" AND ";
-        }
-        sql += "완료=1 ";
-
-        sql += "UNION SELECT * FROM lhbidinfo WHERE ";
-        if (org != null) {
-            sql += "지역본부 = \"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "업무=\"" + workType + "\" AND ";
-        }
-        sql += "개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호;";
-
-        rs = st.executeQuery(sql);
 
         int cellIndex = 0;
         int index = 1;
@@ -1099,27 +1135,11 @@ public class ExcelWriter {
 
         labelColumns();
 
-        String sql = "SELECT * FROM letsrunbidinfo WHERE ";
-        if ((sd != null) && (ed != null)) {
-            sql += "개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ";
+        if (cachedRowSet == null) {
+            rs = st.executeQuery(sql);
+        } else {
+            rs = cachedRowSet.getOriginal();
         }
-        if (org != null) {
-            sql += "사업장=\"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "입찰구분=\"" + workType + "\" AND ";
-        }
-        sql += "완료=1 ";
-
-        sql += "UNION SELECT * FROM letsrunbidinfo WHERE ";
-        if (org != null) {
-            sql += "사업장=\"" + org + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "입찰구분=\"" + workType + "\" AND ";
-        }
-        sql += "개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호;";
-        rs = st.executeQuery(sql);
 
         int cellIndex = 0;
         int index = 1;
@@ -1465,42 +1485,11 @@ public class ExcelWriter {
 
         labelColumns();
 
-        String sql = "SELECT * FROM dapabidinfo WHERE ";
-        if ((sd != null) && (ed != null)) {
-            sql += "개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ";
+        if (cachedRowSet == null) {
+            rs = st.executeQuery(sql);
+        } else {
+            rs = cachedRowSet.getOriginal();
         }
-        if (org != null) {
-            sql += "발주기관 = \"" + org + "\" AND ";
-        }
-        if ((lowerBound != null) && (upperBound != null)) {
-            String rate = lowerBound + " ~ " + upperBound;
-            sql += "사정률=\"" + rate + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "분류=\"" + workType + "\" AND ";
-        }
-        if (bidType != null) {
-            sql += "입찰종류=\"" + bidType + "\" AND ";
-        }
-        sql += "완료=1 ";
-
-        // Add unopened bids
-        sql += "UNION SELECT * FROM dapabidinfo WHERE ";
-        if (org != null) {
-            sql += "발주기관 = \"" + org + "\" AND ";
-        }
-        if ((lowerBound != null) && (upperBound != null)) {
-            sql += "하한=\"" + lowerBound + "\" AND 상한=\"" + upperBound + "\" AND ";
-        }
-        if (workType != null) {
-            sql += "분류=\"" + workType + "\" AND ";
-        }
-        if (bidType != null) {
-            sql += "입찰종류=\"" + bidType + "\" AND ";
-        }
-        sql += "개찰일시 >=\"" + today + "\" ORDER BY 개찰일시, 공고번호";
-
-        rs = st.executeQuery(sql);
 
         int cellIndex = 0;
         int index = 1;
@@ -1662,7 +1651,7 @@ public class ExcelWriter {
             String rate = rs.getString("사정률");
             if (rate.equals("") || rate.equals("-")) {
                 String lowerrate = rs.getString("하한");
-                if (lowerrate.equals("") || lowerrate.equals("-")) rate = "";
+                if (lowerrate == null || lowerrate.equals("") || lowerrate.equals("-")) rate = "";
                 else rate = lowerrate + " ~ " + rs.getString("상한");
             }
             row.createCell(cellIndex++).setCellValue(rate);

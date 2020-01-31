@@ -8,6 +8,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.SQLException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,7 +24,7 @@ public class Main extends JFrame {
     private JComponent dataPanel;
     private JComponent updatePanel;
 
-    public Main() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, URISyntaxException {
+    public Main() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, SQLException {
         super();
 
         try {
@@ -63,7 +64,7 @@ public class Main extends JFrame {
         menuBar.add(settingMenu);
     }
 
-    public void initializeTabbedPane() throws IOException, URISyntaxException {
+    public void initializeTabbedPane() throws IOException, SQLException {
         tabbedPane = new JTabbedPane();
 
         dataPanel = new DataPanel("BID");
@@ -73,7 +74,7 @@ public class Main extends JFrame {
         tabbedPane.addTab("업데이트 센터", updatePanel);
     }
 
-    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, URISyntaxException {
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, SQLException {
         //Disable unnecessary error logs.
         java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(java.util.logging.Level.OFF);
 

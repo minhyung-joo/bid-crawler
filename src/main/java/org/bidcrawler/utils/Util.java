@@ -236,4 +236,137 @@ public class Util {
 
         return str.replaceAll("[^\\d.-]", "");
     }
+
+
+    public static String selectDapa(String org, String sd, String ed, String workType, String lowerBound, String upperBound, String bidType, String today) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT * FROM dapabidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("발주기관=\"" + org + "\" AND ");
+        }
+        if (sd != null && ed != null) {
+            sqlBuilder.append("개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("분류=\"" + workType + "\" AND ");
+        }
+        if (lowerBound != null && upperBound != null) {
+            String rate = lowerBound + " ~ " + upperBound;
+            sqlBuilder.append("사정률=\"" + rate + "\" AND ");
+        }
+        if (!bidType.equals("전체")) {
+            sqlBuilder.append("입찰종류=\"" + bidType + "\" AND ");
+        }
+        sqlBuilder.append("완료 > 0 ");
+
+        // Add unopened notis
+        sqlBuilder.append("UNION SELECT * FROM dapabidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("발주기관=\"" + org + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("분류=\"" + workType + "\" AND ");
+        }
+        if (lowerBound != null && upperBound != null) {
+            sqlBuilder.append("하한=\"" + lowerBound + "\" AND 상한=\"" + upperBound + "\" AND ");
+        }
+        if (!bidType.equals("전체")) {
+            sqlBuilder.append("입찰종류=\"" + bidType + "\" AND ");
+        }
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        return sqlBuilder.toString();
+    }
+
+    public static String selectLh(String org, String sd, String ed, String workType, String lowerBound, String upperBound, String bidType, String today) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT * FROM lhbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("지역본부=\"" + org + "\" AND ");
+        }
+        if (sd != null && ed != null) {
+            sqlBuilder.append("개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("업무=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("완료 > 0 ");
+
+        // Add unopened notis
+        sqlBuilder.append("UNION SELECT * FROM lhbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("지역본부=\"" + org + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("업무=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        return sqlBuilder.toString();
+    }
+
+    public static String selectEx(String org, String sd, String ed, String workType, String lowerBound, String upperBound, String bidType, String today) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT * FROM exbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("지역=\"" + org + "\" AND ");
+        }
+        if (sd != null && ed != null) {
+            sqlBuilder.append("개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("분류=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("완료 > 0 ");
+
+        // Add unopened notis
+        sqlBuilder.append("UNION SELECT * FROM exbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("지역=\"" + org + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("분류=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        return sqlBuilder.toString();
+    }
+
+    public static String selectLets(String org, String sd, String ed, String workType, String lowerBound, String upperBound, String bidType, String today) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT * FROM letsrunbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("사업장=\"" + org + "\" AND ");
+        }
+        if (sd != null && ed != null) {
+            sqlBuilder.append("개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("입찰구분=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("완료 > 0 ");
+
+        // Add unopened notis
+        sqlBuilder.append("UNION SELECT * FROM letsrunbidinfo WHERE ");
+        if (!org.equals("")) {
+            sqlBuilder.append("사업장=\"" + org + "\" AND ");
+        }
+        if (!workType.equals("전체")) {
+            sqlBuilder.append("입찰구분=\"" + workType + "\" AND ");
+        }
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        return sqlBuilder.toString();
+    }
+
+    public static String selectRailnet(String org, String sd, String ed, String workType, String lowerBound, String upperBound, String bidType, String today) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT * FROM railnetbidinfo WHERE ");
+        if (sd != null && ed != null) {
+            sqlBuilder.append("개찰일시 >= \"" + sd + "\" AND 개찰일시 <= \"" + ed + "\" AND ");
+        }
+        sqlBuilder.append("완료 > 0 ");
+
+        // Add unopened notis
+        sqlBuilder.append("UNION SELECT * FROM railnetbidinfo WHERE ");
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        return sqlBuilder.toString();
+    }
+
 }
