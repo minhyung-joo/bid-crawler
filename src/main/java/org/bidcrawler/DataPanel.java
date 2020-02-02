@@ -489,6 +489,7 @@ public class DataPanel extends JPanel {
                         ew = new ExcelWriter(site, sql, null);
                     }
 
+                    ew.setOptions(sd, ed, org, workType, lowerBound, upperBound, bidType);
                     ew.toExcel();
                 } catch (Exception ex) {
                     Logger.getGlobal().log(Level.WARNING, ex.getMessage(), ex);

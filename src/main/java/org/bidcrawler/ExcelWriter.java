@@ -73,6 +73,16 @@ public class ExcelWriter {
         today = todayFormat.format(new Date());
     }
 
+    public void setOptions(String sd, String ed, String org, String workType, String lowerBound, String upperBound, String bidType) {
+        this.sd = sd;
+        this.ed = ed;
+        this.org = org;
+        this.workType = workType;
+        this.lowerBound = lowerBound;
+        this.upperBound = upperBound;
+        this.bidType = bidType;
+    }
+
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
         ExcelWriter tester = new ExcelWriter("국방조달청", null, null);
 

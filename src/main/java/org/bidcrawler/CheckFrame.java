@@ -30,7 +30,7 @@ public abstract class CheckFrame extends JFrame
     ArrayList<Integer> progressArray;
     ArrayList<Integer> totalArray;
     boolean running;
-    int counter;
+    volatile int counter;
     int threadNum;
     String startDate;
     String endDate;

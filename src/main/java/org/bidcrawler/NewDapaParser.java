@@ -885,9 +885,9 @@ public class NewDapaParser extends Parser {
                     if (header.text().contains("개찰일시")) {
                         realOpenDate = header.nextElementSibling().text();
                         if (realOpenDate.contains("(")) {
-                            realOpenDate = realOpenDate.split("\\(")[1].substring(0, 16);
-                        } else {
-                            realOpenDate = null;
+                            if (realOpenDate.split("\\(")[1].length() >= 16) {
+                                realOpenDate = realOpenDate.split("\\(")[1].substring(0, 16);
+                            }
                         }
                     }
                 }
