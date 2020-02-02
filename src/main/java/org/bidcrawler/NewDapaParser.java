@@ -309,7 +309,7 @@ public class NewDapaParser extends Parser {
                         }
                     } else {
                         // If entry doesn't exists in db, insert new row.
-                        sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 입찰종류, 공고종류, 공사번호, 발주기관, 개찰일시, 계약방법, ";
+                        sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 입찰종류, 공고종류, 공사번호, 발주기관, 개찰일시, 실제개찰일시, 계약방법, ";
                         if (Util.isNumeric(basicPrice)) {
                             sql += "기초예비가격, ";
                         }
@@ -329,6 +329,7 @@ public class NewDapaParser extends Parser {
                                 "\""+annType+"\", " +
                                 "\""+idenNum+"\", " +
                                 "\""+org+"\", " +
+                                "\""+openDate+"\", " +
                                 "\""+openDate+"\", " +
                                 "\""+compType+"\", ";
                         if (Util.isNumeric(basicPrice)) {
