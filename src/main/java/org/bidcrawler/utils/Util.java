@@ -273,7 +273,7 @@ public class Util {
         if (!bidType.equals("전체")) {
             sqlBuilder.append("입찰종류=\"" + bidType + "\" AND ");
         }
-        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 실제개찰일시, 개찰일시, 공고번호");
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 실제개찰일시 ASC, 개찰일시 ASC, 공고번호 ASC, 차수 DESC");
         return sqlBuilder.toString();
     }
 

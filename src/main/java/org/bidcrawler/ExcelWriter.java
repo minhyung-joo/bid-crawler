@@ -10,10 +10,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -67,7 +64,7 @@ public class ExcelWriter {
         sheet = workbook.createSheet("입찰정보");
         money = (HSSFCellStyle) workbook.createCellStyle();
         HSSFDataFormat moneyFormat = (HSSFDataFormat) workbook.createDataFormat();
-        money.setDataFormat(moneyFormat.getFormat(BuiltinFormats.getBuiltinFormat(42)));
+        money.setDataFormat(moneyFormat.getFormat(BuiltinFormats.getBuiltinFormat(3)));
         sdf = new SimpleDateFormat("yyyy-MM-dd");
         SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         today = todayFormat.format(new Date());

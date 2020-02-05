@@ -780,20 +780,20 @@ public class NewRailnetParser extends Parser
                 parseResultData();
             }
 
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             Logger.getGlobal().log(Level.WARNING, sw.toString());
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
         }

@@ -146,7 +146,7 @@ public class NewDapaParser extends Parser {
             cookie = response.getFirstHeader("Set-Cookie").getValue();
         }
         BufferedReader rd = new BufferedReader(
-                new InputStreamReader(response.getEntity().getContent()));
+                new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
 
         StringBuffer result = new StringBuffer();
         String line;
@@ -178,7 +178,7 @@ public class NewDapaParser extends Parser {
         System.out.println("Post parameters : " + param);
         System.out.println("Response Code : " + responseCode);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
@@ -443,6 +443,7 @@ public class NewDapaParser extends Parser {
             }
         } else {
             Logger.getGlobal().log(Level.WARNING, "Invalid response from entry " + entry.bidInfo.get("anmtNumb"));
+            Logger.getGlobal().log(Level.WARNING, doc.getElementsByTag("body").get(0).html());
         }
 
         String license = parseLicenseInfo(doc); // 면허명칭
@@ -895,6 +896,7 @@ public class NewDapaParser extends Parser {
             }
         } else {
             Logger.getGlobal().log(Level.WARNING, "Invalid response from entry " + entry.bidInfo.get("anmtNumb"));
+            Logger.getGlobal().log(Level.WARNING, doc.getElementsByTag("body").get(0).html());
         }
 
         String companies = null;
@@ -1543,19 +1545,23 @@ public class NewDapaParser extends Parser {
             setOption("FACIL");
             if (!shutdown) parseBidData();
 
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
         } catch (Exception e) {
-            Logger.getGlobal().log(Level.WARNING, e.getMessage());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String sStackTrace = sw.toString();
+            Logger.getGlobal().log(Level.WARNING, sStackTrace);
             e.printStackTrace();
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
         }

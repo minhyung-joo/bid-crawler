@@ -77,18 +77,18 @@ public class LetsParser extends Parser {
             setOption("결과");
             if (!shutdown) getList();
 
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
         } catch (IOException | SQLException e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
-            if (frame != null) {
+            if (frame != null && !shutdown) {
                 frame.toggleButton();
             }
-            if (checkFrame != null) {
+            if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
 
