@@ -163,9 +163,9 @@ public class DataPanel extends JPanel {
             endDate.setTextEditable(true);
             rateCheck = new JCheckBox();
             upperInput = new JTextField(4);
-            upperInput.setText("0.00");
+            upperInput.setText("2.00");
             lowerInput = new JTextField(4);
-            lowerInput.setText("-3.00");
+            lowerInput.setText("-2.00");
             searchButton = new JButton("검색");
             searchButton.addActionListener(new SearchListener());
             excelButton = new JButton("엑셀저장");
