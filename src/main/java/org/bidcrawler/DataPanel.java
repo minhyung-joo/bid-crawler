@@ -83,6 +83,7 @@ public class DataPanel extends JPanel {
         });
         data.setIntercellSpacing(new Dimension(1, 1));
         data.setRowHeight(20);
+        data.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         JScrollPane scroll = new JScrollPane(data);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -106,7 +107,7 @@ public class DataPanel extends JPanel {
     public void adjustColumns() {
         data.setRowHeight(20);
         final TableColumnModel columnModel = data.getColumnModel();
-        for (int i = 0; i < 17; i++) {
+        for (int i = 0; i < data.getColumnCount(); i++) {
             int width = 50;
             for (int j = 0; j < data.getRowCount(); j++) {
                 TableCellRenderer renderer = data.getCellRenderer(j, i);
@@ -115,7 +116,7 @@ public class DataPanel extends JPanel {
             }
             DefaultTableCellRenderer leftRender = new DefaultTableCellRenderer();
             leftRender.setHorizontalAlignment(SwingConstants.LEFT);
-            if ((i < 4) || (i > 9)) {
+            if ((i < 4 || i > 9) && (i < 19 || i > 23)) {
                 columnModel.getColumn(i).setCellRenderer(leftRender);
             }
 
@@ -309,7 +310,32 @@ public class DataPanel extends JPanel {
                     cachedRowSet.release();
                     cachedRowSet.populate(rs);
 
-                    DefaultTableModel m = (DefaultTableModel) data.getModel();
+                    DefaultTableCellRenderer rightRender = new DefaultTableCellRenderer();
+                    rightRender.setHorizontalAlignment(SwingConstants.RIGHT);
+                    String[] columns = new String[] {};
+                    switch (site) {
+                        case "국방조달청":
+                            columns = Util.DAPA_COLUMNS;
+                            break;
+                        case "LH공사":
+                            columns = Util.LH_COLUMNS;
+                            break;
+                        case "한국마사회":
+                            columns = Util.LETS_COLUMNS;
+                            break;
+                        case "도로공사":
+                            columns = Util.EX_COLUMNS;
+                            break;
+                        case "철도시설공단":
+                            columns = Util.RAILNET_COLUMNS;
+                            break;
+                    }
+                    DefaultTableModel m = new DefaultTableModel(columns, 0);
+                    data.setModel(m);
+                    for (int i = 0; i < data.getColumnCount(); i++) {
+                        data.getColumn(columns[i]).setCellRenderer(rightRender);
+                    }
+
                     m.setRowCount(0);
                     int index = 1;
                     while(cachedRowSet.next()) {
@@ -317,113 +343,27 @@ public class DataPanel extends JPanel {
                             continue;
                         }
 
-                        String bidno = cachedRowSet.getString("공고번호");
-
-                        String date = cachedRowSet.getString("개찰일시");
-                        if (date.length() == 21) {
-                            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+                        Object[] row = new Object[] {};
+                        switch (site) {
+                            case "국방조달청":
+                                row = Util.getDapaRow(cachedRowSet, index);
+                                break;
+                            case "LH공사":
+                                row = Util.getLhRow(cachedRowSet, index);
+                                break;
+                            case "한국마사회":
+                                row = Util.getLetsRow(cachedRowSet, index);
+                                break;
+                            case "도로공사":
+                                row = Util.getExRow(cachedRowSet, index);
+                                break;
+                            case "철도시설공단":
+                                row = Util.getRailnetRow(cachedRowSet, index);
+                                break;
                         }
 
-                        String limit = "-";
-                        if (site.equals("국방조달청")) limit = cachedRowSet.getString("면허명칭");
-                        else if (site.equals("나라장터") || site.equals("도로공사")) limit = cachedRowSet.getString("업종제한사항");
 
-                        String bPrice = "";
-                        if (site.equals("LH공사")) bPrice = cachedRowSet.getString("기초금액");
-                        else if (site.equals("국방조달청")) bPrice = cachedRowSet.getString("기초예비가격");
-                        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = cachedRowSet.getString("설계금액");
-                        else if (site.equals("한국마사회")) bPrice = cachedRowSet.getString("예비가격기초금액");
-
-                        String ePrice = "";
-                        if (site.equals("LH공사")) ePrice = cachedRowSet.getString("예정금액");
-                        else ePrice = cachedRowSet.getString("예정가격");
-                        if (ePrice == null) ePrice = "";
-                        if (!ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
-                            double amount = Double.parseDouble(ePrice);
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            ePrice = formatter.format(amount);
-                        }
-                        else ePrice = "-";
-
-                        String tPrice = cachedRowSet.getString("투찰금액");
-                        if (tPrice == null) tPrice = "";
-                        if (!tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
-                            double amount = Double.parseDouble(tPrice);
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            tPrice = formatter.format(amount);
-                        }
-                        else tPrice = "-";
-
-                        String dPrice1 = cachedRowSet.getString("복수1");
-                        if (dPrice1 == null) dPrice1 = "";
-                        if (!dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
-                            double amount = Double.parseDouble(dPrice1);
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            dPrice1 = formatter.format(amount);
-                        }
-                        else dPrice1 = "-";
-
-                        String dPrice2 = cachedRowSet.getString("복수15");
-                        if (dPrice2 == null) dPrice2 = "";
-                        if (!dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
-                            double amount = Double.parseDouble(dPrice2);
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            dPrice2 = formatter.format(amount);
-                        }
-                        else dPrice2 = "-";
-
-                        String comp = "";
-                        if (site.equals("LH공사") || site.equals("도로공사")) comp = cachedRowSet.getString("참가수");
-                        else if (site.equals("국방조달청") || site.equals("한국마사회") || site.equals("나라장터")) comp = cachedRowSet.getString("참여수");
-                        if (comp == null) comp = "";
-                        if (!comp.equals("") && !comp.equals("0")) {
-                            double amount = Double.parseDouble(comp);
-                            DecimalFormat formatter = new DecimalFormat("#,###");
-                            comp = formatter.format(amount);
-                        }
-                        else comp = "-";
-
-                        String eDate = "";
-                        eDate = cachedRowSet.getString("개찰일시");
-                        if (eDate != null) {
-                            if (eDate.length() == 21) {
-                                eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
-                            }
-                        }
-
-                        String prog = "";
-                        if (site.equals("LH공사")) prog = cachedRowSet.getString("개찰내역");
-                        else if (site.equals("한국마사회")) prog = cachedRowSet.getString("개찰상태");
-                        else if (site.equals("도로공사")) prog = cachedRowSet.getString("결과상태");
-                        else if (site.equals("국방조달청")) prog = cachedRowSet.getString("입찰결과");
-                        else if (site.equals("철도시설공단")) prog = cachedRowSet.getString("개찰결과");
-
-                        String annOrg = "";
-                        if (site.equals("철도시설공단")) annOrg = cachedRowSet.getString("공고기관");
-                        else if (site.equals("LH공사")) annOrg = cachedRowSet.getString("지역본부");
-                        else if (site.equals("한국마사회")) annOrg = cachedRowSet.getString("사업장");
-                        else if (site.equals("국방조달청")) annOrg = cachedRowSet.getString("발주기관");
-                        else if (site.equals("도로공사")) annOrg = cachedRowSet.getString("지역");
-
-                        String demOrg = "";
-                        if (site.equals("철도시설공단")) demOrg = cachedRowSet.getString("수요기관");
-                        else if (site.equals("LH공사")) demOrg = cachedRowSet.getString("지역본부");
-                        else if (site.equals("한국마사회")) demOrg = cachedRowSet.getString("사업장");
-                        else if (site.equals("국방조달청")) demOrg = cachedRowSet.getString("발주기관");
-                        else if (site.equals("도로공사")) demOrg = cachedRowSet.getString("지역");
-
-                        bidType = "";
-                        if (site.equals("나라장터") || site.equals("한국마사회") || site.equals("LH공사")) bidType = cachedRowSet.getString("입찰방식");
-                        else if (site.equals("국방조달청")) bidType = cachedRowSet.getString("입찰방법");
-
-                        String compType = cachedRowSet.getString("계약방법");
-
-                        String priceMethod = "";
-                        if (site.equals("철도시설공단")) priceMethod = cachedRowSet.getString("예가방식");
-                        else if (site.equals("한국마사회")) priceMethod = cachedRowSet.getString("예정가격방식");
-
-                        m.addRow(new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
-                                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod });
+                        m.addRow(row);
                         index++;
                     }
 
@@ -482,12 +422,14 @@ public class DataPanel extends JPanel {
                     }
 
                     ExcelWriter ew;
+                    ew = new ExcelWriter(site, sql, null);
+                    /*
                     if (sql.equals(lastSql)) {
                         ew = new ExcelWriter(site, sql, cachedRowSet);
-                        System.out.println("cached");
                     } else {
                         ew = new ExcelWriter(site, sql, null);
                     }
+                    */
 
                     ew.setOptions(sd, ed, org, workType, lowerBound, upperBound, bidType);
                     ew.toExcel();

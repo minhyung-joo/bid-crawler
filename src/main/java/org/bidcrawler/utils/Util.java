@@ -4,6 +4,7 @@ package org.bidcrawler.utils;
  * Created by ravenjoo on 6/24/17.
  */
 
+import javax.sql.rowset.CachedRowSet;
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +16,11 @@ import java.util.Properties;
 
 public class Util {
     public static String[] COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법" };
+    public static String[] DAPA_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "기초예가적용여부", "사전심사", "낙찰자결정방법", "입찰서제출마감일시", "낙찰하한율", "사정률" };
+    public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법", "재입찰", "선택가격1", "선택가격2", "선택가격3", "선택가격4", "기존예정가격", "분류", "업무" };
+    public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
+    public static String[] EX_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "복수예가여부", "재입찰허용여부", "전자입찰여부", "공동수급가능여부", "현장설명실시여부", "공동수급의무여부" };
+    public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
     public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "철도시설공단" };
 
     public static String[] DAPA_TYPES = { "전체", "경쟁", "협상" };
@@ -369,4 +375,438 @@ public class Util {
         return sqlBuilder.toString();
     }
 
+    public static Object[] getDapaRow(CachedRowSet cachedRowSet, int index) throws SQLException {
+        String bidno = cachedRowSet.getString("공고번호");
+        String date = cachedRowSet.getString("개찰일시");
+        if (date.length() == 21) {
+            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        }
+
+        String limit = cachedRowSet.getString("면허명칭");
+
+        String bPrice = cachedRowSet.getString("기초예비가격");
+        if (bPrice != null && !bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else bPrice = "-";
+
+        String ePrice = cachedRowSet.getString("예정가격");
+        if (ePrice != null && !ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(ePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            ePrice = formatter.format(amount);
+        }
+        else ePrice = "-";
+
+        String tPrice = cachedRowSet.getString("투찰금액");
+        if (tPrice != null && !tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(tPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            tPrice = formatter.format(amount);
+        }
+        else tPrice = "-";
+
+        String dPrice1 = cachedRowSet.getString("복수1");
+        if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice1 = formatter.format(amount);
+        }
+        else dPrice1 = "-";
+
+        String dPrice2 = cachedRowSet.getString("복수15");
+        if (dPrice2 != null && !dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice2 = formatter.format(amount);
+        }
+        else dPrice2 = "-";
+
+        String comp = cachedRowSet.getString("참여수");
+        if (comp != null && !comp.equals("") && !comp.equals("0")) {
+            double amount = Double.parseDouble(comp);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            comp = formatter.format(amount);
+        }
+        else comp = "-";
+
+        String eDate = cachedRowSet.getString("개찰일시");
+        if (eDate != null) {
+            if (eDate.length() == 21) {
+                eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
+            }
+        }
+
+        String prog = cachedRowSet.getString("입찰결과");
+        String annOrg = cachedRowSet.getString("발주기관");
+        String demOrg = cachedRowSet.getString("발주기관");
+        String bidType = cachedRowSet.getString("입찰방법");
+        String compType = cachedRowSet.getString("계약방법");
+        String priceMethod = "";
+        String hasBase = cachedRowSet.getString("기초예가적용여부");
+        String prelim = cachedRowSet.getString("사전심사");
+        String choiceMethod = cachedRowSet.getString("낙찰자결정방법");
+        String dd = cachedRowSet.getString("입찰서제출마감일시");
+        if (dd != null) {
+            if (dd.length() == 21) {
+                dd = dd.substring(2, 4) + dd.substring(5, 7) + dd.substring(8, 10) + " " + dd.substring(11, 16);
+            }
+        }
+
+        String lbound = cachedRowSet.getString("낙찰하한율");
+        lbound = lbound.replaceAll("[^\\d.]", "");
+        if (!lbound.equals("")) lbound += "%";
+        else lbound = "-";
+        String rate = cachedRowSet.getString("사정률");
+        if (rate.equals("") || rate.equals("-")) {
+            String lowerrate = cachedRowSet.getString("하한");
+            if (lowerrate == null || lowerrate.equals("") || lowerrate.equals("-")) rate = "";
+            else rate = lowerrate + " ~ " + cachedRowSet.getString("상한");
+        }
+
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, hasBase, prelim, choiceMethod, dd, lbound, rate };
+    }
+
+    public static Object[] getLhRow(CachedRowSet cachedRowSet, int index) throws SQLException {
+        String bidno = cachedRowSet.getString("공고번호");
+
+        String date = cachedRowSet.getString("개찰일시");
+        if (date.length() == 21) {
+            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        }
+
+        String limit = "-";
+        String bPrice = cachedRowSet.getString("기초금액");
+        if (bPrice != null && !bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else bPrice = "-";
+
+        String ePrice = cachedRowSet.getString("예정금액");
+        if (ePrice != null && !ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(ePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            ePrice = formatter.format(amount);
+        }
+        else ePrice = "-";
+
+        String tPrice = cachedRowSet.getString("투찰금액");
+        if (tPrice != null && !tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(tPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            tPrice = formatter.format(amount);
+        }
+        else tPrice = "-";
+
+        String dPrice1 = cachedRowSet.getString("복수1");
+        if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice1 = formatter.format(amount);
+        }
+        else dPrice1 = "-";
+
+        String dPrice2 = cachedRowSet.getString("복수15");
+        if (dPrice2 != null && !dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice2 = formatter.format(amount);
+        }
+        else dPrice2 = "-";
+
+        String comp = cachedRowSet.getString("참가수");
+        if (comp != null && !comp.equals("") && !comp.equals("0")) {
+            double amount = Double.parseDouble(comp);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            comp = formatter.format(amount);
+        }
+        else comp = "-";
+
+        String eDate = cachedRowSet.getString("개찰일시");
+        if (eDate != null) {
+            if (eDate.length() == 21) {
+                eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
+            }
+        }
+
+        String prog = cachedRowSet.getString("개찰내역");
+        String annOrg = cachedRowSet.getString("지역본부");
+        String demOrg = cachedRowSet.getString("지역본부");
+        String bidType = cachedRowSet.getString("입찰방식");
+        String compType = cachedRowSet.getString("계약방법");
+        String priceMethod = "";
+        String choiceMethod = cachedRowSet.getString("낙찰자선정방법");
+        String rebid = cachedRowSet.getString("재입찰");
+        String chosenPrice1 = cachedRowSet.getString("선택가격1");
+        if (chosenPrice1 != null && !chosenPrice1.equals("") && !(chosenPrice1.equals("0") || chosenPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(chosenPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            chosenPrice1 = formatter.format(amount);
+        }
+        else chosenPrice1 = "-";
+
+        String chosenPrice2 = cachedRowSet.getString("선택가격2");
+        if (chosenPrice2 != null && !chosenPrice2.equals("") && !(chosenPrice2.equals("0") || chosenPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(chosenPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            chosenPrice2 = formatter.format(amount);
+        }
+        else chosenPrice2 = "-";
+
+        String chosenPrice3 = cachedRowSet.getString("선택가격3");
+        if (chosenPrice3 != null && !chosenPrice3.equals("") && !(chosenPrice3.equals("0") || chosenPrice3.equals("0.00"))) {
+            double amount = Double.parseDouble(chosenPrice3);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            chosenPrice3 = formatter.format(amount);
+        }
+        else chosenPrice3 = "-";
+
+        String chosenPrice4 = cachedRowSet.getString("선택가격4");
+        if (chosenPrice4 != null && !chosenPrice4.equals("") && !(chosenPrice4.equals("0") || chosenPrice4.equals("0.00"))) {
+            double amount = Double.parseDouble(chosenPrice4);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            chosenPrice4 = formatter.format(amount);
+        }
+        else chosenPrice4 = "-";
+
+        String sitePrice = cachedRowSet.getString("기존예정가격");
+        if (sitePrice != null && !sitePrice.equals("") && !(sitePrice.equals("0") || sitePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(sitePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            sitePrice = formatter.format(amount);
+        }
+        else sitePrice = "-";
+
+        String type = cachedRowSet.getString("분류");
+        String work = cachedRowSet.getString("업무");
+
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, choiceMethod, rebid, chosenPrice1, chosenPrice2, chosenPrice3, chosenPrice4, sitePrice, type, work };
+    }
+
+    public static Object[] getLetsRow(CachedRowSet cachedRowSet, int index) throws SQLException {
+        String bidno = cachedRowSet.getString("공고번호");
+
+        String date = cachedRowSet.getString("개찰일시");
+        if (date.length() == 21) {
+            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        }
+
+        String limit = "-";
+        String bPrice = cachedRowSet.getString("예비가격기초금액");
+        if (bPrice != null && !bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else bPrice = "-";
+
+        String ePrice = cachedRowSet.getString("예정가격");
+        if (ePrice != null && !ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(ePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            ePrice = formatter.format(amount);
+        }
+        else ePrice = "-";
+
+        String tPrice = cachedRowSet.getString("투찰금액");
+        if (tPrice != null && !tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(tPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            tPrice = formatter.format(amount);
+        }
+        else tPrice = "-";
+
+        String dPrice1 = cachedRowSet.getString("복수1");
+        if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice1 = formatter.format(amount);
+        }
+        else dPrice1 = "-";
+
+        String dPrice2 = cachedRowSet.getString("복수15");
+        if (dPrice2 != null && !dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice2 = formatter.format(amount);
+        }
+        else dPrice2 = "-";
+
+        String comp = cachedRowSet.getString("참여수");
+        if (comp != null && !comp.equals("") && !comp.equals("0")) {
+            double amount = Double.parseDouble(comp);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            comp = formatter.format(amount);
+        }
+        else comp = "-";
+
+        String eDate = cachedRowSet.getString("개찰일시");
+        if (eDate != null) {
+            if (eDate.length() == 21) {
+                eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
+            }
+        }
+
+        String prog = cachedRowSet.getString("개찰상태");
+        String annOrg = cachedRowSet.getString("사업장");
+        String demOrg = cachedRowSet.getString("사업장");
+        String bidType = cachedRowSet.getString("입찰방식");
+        String compType = cachedRowSet.getString("계약방법");
+        String priceMethod = cachedRowSet.getString("예정가격방식");
+        String choiceMethod = cachedRowSet.getString("낙찰자선정방법");
+
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, choiceMethod };
+    }
+
+    public static Object[] getExRow(CachedRowSet cachedRowSet, int index) throws SQLException {
+        String bidno = cachedRowSet.getString("공고번호");
+        String date = cachedRowSet.getString("개찰일시");
+        if (date.length() == 21) {
+            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        }
+
+        String limit = cachedRowSet.getString("업종제한사항");
+
+        String bPrice = cachedRowSet.getString("설계금액");
+        if (bPrice != null && !bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else bPrice = "-";
+
+        String ePrice = cachedRowSet.getString("예정가격");
+        if (ePrice != null && !ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(ePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            ePrice = formatter.format(amount);
+        }
+        else ePrice = "-";
+
+        String tPrice = cachedRowSet.getString("투찰금액");
+        if (tPrice != null && !tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(tPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            tPrice = formatter.format(amount);
+        }
+        else tPrice = "-";
+
+        String dPrice1 = cachedRowSet.getString("복수1");
+        if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice1 = formatter.format(amount);
+        }
+        else dPrice1 = "-";
+
+        String dPrice2 = cachedRowSet.getString("복수15");
+        if (dPrice2 != null && !dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice2 = formatter.format(amount);
+        }
+        else dPrice2 = "-";
+
+        String comp = cachedRowSet.getString("참가수");
+        if (comp != null && !comp.equals("") && !comp.equals("0")) {
+            double amount = Double.parseDouble(comp);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            comp = formatter.format(amount);
+        }
+        else comp = "-";
+
+        String eDate = cachedRowSet.getString("개찰일시");
+        if (eDate != null) {
+            if (eDate.length() == 21) {
+                eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
+            }
+        }
+
+        String prog = cachedRowSet.getString("결과상태");
+        String annOrg = cachedRowSet.getString("지역");
+        String demOrg = cachedRowSet.getString("지역");
+        String bidType = "";
+        String compType = cachedRowSet.getString("계약방법");
+        String priceMethod = "";
+        String hasPrice = cachedRowSet.getString("복수예가여부");
+        String hasRebid = cachedRowSet.getString("재입찰허용여부");
+        String hasElec = cachedRowSet.getString("전자입찰여부");
+        String hasCo = cachedRowSet.getString("공동수급가능여부");
+        String hasExpl = cachedRowSet.getString("현장설명실시여부");
+        String needCo = cachedRowSet.getString("공동수급의무여부");
+
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, hasPrice, hasRebid, hasElec, hasCo, hasExpl, needCo };
+    }
+
+    public static Object[] getRailnetRow(CachedRowSet cachedRowSet, int index) throws SQLException {
+        String bidno = cachedRowSet.getString("공고번호");
+        String date = cachedRowSet.getString("개찰일시");
+        if (date.length() == 21) {
+            date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        }
+
+        String limit = "-";
+        String bPrice = cachedRowSet.getString("설계금액");
+        if (bPrice != null && !bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(bPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            bPrice = formatter.format(amount);
+        }
+        else bPrice = "-";
+
+        String ePrice = cachedRowSet.getString("예정가격");
+        if (ePrice != null && !ePrice.equals("") && !(ePrice.equals("0") || ePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(ePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            ePrice = formatter.format(amount);
+        }
+        else ePrice = "-";
+
+        String tPrice = cachedRowSet.getString("투찰금액");
+        if (tPrice != null && !tPrice.equals("") && !(tPrice.equals("0") || tPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(tPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            tPrice = formatter.format(amount);
+        }
+        else tPrice = "-";
+
+        String dPrice1 = cachedRowSet.getString("복수1");
+        if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice1);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice1 = formatter.format(amount);
+        }
+        else dPrice1 = "-";
+
+        String dPrice2 = cachedRowSet.getString("복수15");
+        if (dPrice2 != null && !dPrice2.equals("") && !(dPrice2.equals("0") || dPrice2.equals("0.00"))) {
+            double amount = Double.parseDouble(dPrice2);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            dPrice2 = formatter.format(amount);
+        }
+        else dPrice2 = "-";
+
+        String comp = "-";
+        String eDate = cachedRowSet.getString("개찰일시");
+        String prog = cachedRowSet.getString("개찰결과");
+        String annOrg = cachedRowSet.getString("공고기관");
+        String demOrg = cachedRowSet.getString("수요기관");
+        String bidType = "";
+        String compType = cachedRowSet.getString("계약방법");
+        String priceMethod = cachedRowSet.getString("예가방식");
+        String criteria = cachedRowSet.getString("심사기준");
+        String choiceMethod = cachedRowSet.getString("낙찰자선정방식");
+        String lBound = cachedRowSet.getString("낙찰하한율");
+
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, criteria, choiceMethod, lBound };
+    }
 }
