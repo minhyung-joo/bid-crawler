@@ -16,11 +16,11 @@ import java.util.Properties;
 
 public class Util {
     public static String[] COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법" };
-    public static String[] DAPA_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "기초예가적용여부", "사전심사", "낙찰자결정방법", "입찰서제출마감일시", "낙찰하한율", "사정률" };
-    public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법", "재입찰", "선택가격1", "선택가격2", "선택가격3", "선택가격4", "기존예정가격", "분류", "업무" };
-    public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
-    public static String[] EX_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "복수예가여부", "재입찰허용여부", "전자입찰여부", "공동수급가능여부", "현장설명실시여부", "공동수급의무여부" };
-    public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
+    public static String[] DAPA_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "기초예가적용여부", "사전심사", "낙찰자결정방법", "입찰서제출마감일시", "낙찰하한율", "사정률" };
+    public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법", "재입찰", "선택가격1", "선택가격2", "선택가격3", "선택가격4", "기존예정가격", "분류", "업무" };
+    public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
+    public static String[] EX_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "복수예가여부", "재입찰허용여부", "전자입찰여부", "공동수급가능여부", "현장설명실시여부", "공동수급의무여부" };
+    public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
     public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "철도시설공단" };
 
     public static String[] DAPA_TYPES = { "전체", "경쟁", "협상" };
@@ -408,6 +408,14 @@ public class Util {
         }
         else tPrice = "-";
 
+        String aPrice = cachedRowSet.getString("A값");
+        if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(aPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            aPrice = formatter.format(amount);
+        }
+        else aPrice = "-";
+
         String dPrice1 = cachedRowSet.getString("복수1");
         if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
             double amount = Double.parseDouble(dPrice1);
@@ -466,7 +474,7 @@ public class Util {
             else rate = lowerrate + " ~ " + cachedRowSet.getString("상한");
         }
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, hasBase, prelim, choiceMethod, dd, lbound, rate };
     }
 
@@ -502,6 +510,14 @@ public class Util {
             tPrice = formatter.format(amount);
         }
         else tPrice = "-";
+
+        String aPrice = cachedRowSet.getString("A값");
+        if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(aPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            aPrice = formatter.format(amount);
+        }
+        else aPrice = "-";
 
         String dPrice1 = cachedRowSet.getString("복수1");
         if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
@@ -585,7 +601,7 @@ public class Util {
         String type = cachedRowSet.getString("분류");
         String work = cachedRowSet.getString("업무");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, choiceMethod, rebid, chosenPrice1, chosenPrice2, chosenPrice3, chosenPrice4, sitePrice, type, work };
     }
 
@@ -621,6 +637,14 @@ public class Util {
             tPrice = formatter.format(amount);
         }
         else tPrice = "-";
+
+        String aPrice = cachedRowSet.getString("A값");
+        if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(aPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            aPrice = formatter.format(amount);
+        }
+        else aPrice = "-";
 
         String dPrice1 = cachedRowSet.getString("복수1");
         if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
@@ -661,7 +685,7 @@ public class Util {
         String priceMethod = cachedRowSet.getString("예정가격방식");
         String choiceMethod = cachedRowSet.getString("낙찰자선정방법");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, choiceMethod };
     }
 
@@ -697,6 +721,14 @@ public class Util {
             tPrice = formatter.format(amount);
         }
         else tPrice = "-";
+
+        String aPrice = cachedRowSet.getString("A값");
+        if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(aPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            aPrice = formatter.format(amount);
+        }
+        else aPrice = "-";
 
         String dPrice1 = cachedRowSet.getString("복수1");
         if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
@@ -742,7 +774,7 @@ public class Util {
         String hasExpl = cachedRowSet.getString("현장설명실시여부");
         String needCo = cachedRowSet.getString("공동수급의무여부");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, hasPrice, hasRebid, hasElec, hasCo, hasExpl, needCo };
     }
 
@@ -778,6 +810,14 @@ public class Util {
         }
         else tPrice = "-";
 
+        String aPrice = cachedRowSet.getString("A값");
+        if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
+            double amount = Double.parseDouble(aPrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            aPrice = formatter.format(amount);
+        }
+        else aPrice = "-";
+
         String dPrice1 = cachedRowSet.getString("복수1");
         if (dPrice1 != null && !dPrice1.equals("") && !(dPrice1.equals("0") || dPrice1.equals("0.00"))) {
             double amount = Double.parseDouble(dPrice1);
@@ -806,7 +846,7 @@ public class Util {
         String choiceMethod = cachedRowSet.getString("낙찰자선정방식");
         String lBound = cachedRowSet.getString("낙찰하한율");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, dPrice1, dPrice2,
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
                 comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, criteria, choiceMethod, lBound };
     }
 }

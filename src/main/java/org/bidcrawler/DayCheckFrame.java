@@ -60,7 +60,7 @@ public class DayCheckFrame extends CheckFrame {
         panel.add(datePanel, "South");
 
         add(panel);
-        setSize(500, 800);
+        setSize(400, 800);
         setResizable(false);
         setDefaultCloseOperation(2);
         setVisible(true);

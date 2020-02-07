@@ -26,10 +26,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -240,14 +237,17 @@ public class NewDapaParser extends Parser {
                     String bidVer = annEntry.bidInfo.get("rqstDegr"); // 차수
                     String idenNum = annEntry.bidInfo.get("dcsnNumb"); // 판단번호
                     String itemNum = annEntry.bidInfo.get("dmstItnb"); // 항목번호
+                    String rqstYear = annEntry.bidInfo.get("rqstYear");
                     String bidType = annEntry.bidInfo.get("lv2Divs").equals("2") ? "협상" : "경쟁";
                     String org = annEntry.bidInfo.get("codeVld3"); // 발주기관
                     String annType = annEntry.bidInfo.get("codeVld1"); // 공고종류
                     String compType = annEntry.bidInfo.get("codeVld4"); // 계약방법
                     String openDate = composeDatetime(annEntry.bidInfo.get("bidxDate"), annEntry.bidInfo.get("bidxTime")); // 개찰일시
                     String basicPrice = annEntry.bidInfo.get("bsicExpt"); // 기초예정가격
+                    String dprtCode = annEntry.bidInfo.get("dprtCode");
                     String priceOpen = ""; // 기초예가공개
                     String applyPrice = ""; // 기초예가적용여부
+                    String g2bNum = rqstYear + dprtCode + idenNum;
                     if (!Util.isNumeric(basicPrice)) {
                         priceOpen = "적용안함";
                     }
@@ -278,7 +278,7 @@ public class NewDapaParser extends Parser {
                                 datetime.substring(10, 12);
                     }
 
-                    String where = "WHERE 공고번호=\"" + bidNum + "\" AND 차수=" + bidVer + " AND 공사번호=\"" + idenNum + "\"";
+                    String where = "WHERE 공고번호=\"" + bidNum + "\" AND 차수=" + bidVer + " AND 공사번호=\"" + idenNum + "\" AND 통합참조번호=\"" + g2bNum + "\" AND 연도=" + rqstYear;
                     String sql = "SELECT EXISTS(SELECT 공사번호 FROM dapabidinfo " + where + ")";
                     rs = st.executeQuery(sql);
                     if (rs.first()) exists = rs.getBoolean(1);
@@ -309,7 +309,7 @@ public class NewDapaParser extends Parser {
                         }
                     } else {
                         // If entry doesn't exists in db, insert new row.
-                        sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 입찰종류, 공고종류, 공사번호, 발주기관, 개찰일시, 실제개찰일시, 계약방법, ";
+                        sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 입찰종류, 공고종류, 공사번호, 발주기관, 개찰일시, 실제개찰일시, 계약방법, 통합참조번호, 연도, ";
                         if (Util.isNumeric(basicPrice)) {
                             sql += "기초예비가격, ";
                         }
@@ -331,7 +331,9 @@ public class NewDapaParser extends Parser {
                                 "\""+org+"\", " +
                                 "\""+openDate+"\", " +
                                 "\""+openDate+"\", " +
-                                "\""+compType+"\", ";
+                                "\""+compType+"\", " +
+                                "\""+g2bNum+"\", " +
+                                rqstYear+", ";
                         if (Util.isNumeric(basicPrice)) {
                             sql += basicPrice + ", ";
                         }
@@ -400,6 +402,14 @@ public class NewDapaParser extends Parser {
         String upperBound = ""; // 사정율 상한
         String rate = ""; // 낙찰하한율
 
+        String medPrice = "0"; // 국민건강보험료
+        String pensionPrice = "0"; // 국민연금보험료
+        String retirePrice = "0"; // 퇴직급여충당금
+        String retireSubPrice = "0"; // 퇴직공제부금
+        String safetyPrice = "0"; // 안전관리비
+        String helpPrice = "0"; // 요양보험료
+        String welfarePrice = "0"; // 산업안전보건관리비
+
         /*
          * Getting the announcement details, including 입찰방법, 낙찰자결정방법, and 사정율
          */
@@ -431,10 +441,50 @@ public class NewDapaParser extends Parser {
                             rate = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
                             break;
                         case "사전심사":
-                            prelim = header.nextElementSibling().text();
-                            break;
                         case "복수업체연구개발 대상구분":
                             prelim = header.nextElementSibling().text();
+                            break;
+                        case "국민건강보험료":
+                            medPrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(medPrice)) {
+                                medPrice = "0";
+                            }
+                            break;
+                        case "국민연금보험료":
+                            pensionPrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(pensionPrice)) {
+                                pensionPrice = "0";
+                            }
+                            break;
+                        case "퇴직급여충당금":
+                            retirePrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(retirePrice)) {
+                                retirePrice = "0";
+                            }
+                            break;
+                        case "퇴직공제부금":
+                            retireSubPrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(retireSubPrice)) {
+                                retireSubPrice = "0";
+                            }
+                            break;
+                        case "안전관리비":
+                            safetyPrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(safetyPrice)) {
+                                safetyPrice = "0";
+                            }
+                            break;
+                        case "요양보험료":
+                            helpPrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(helpPrice)) {
+                                helpPrice = "0";
+                            }
+                            break;
+                        case "산업안전보건관리비":
+                            welfarePrice = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            if (!Util.isNumeric(welfarePrice)) {
+                                welfarePrice = "0";
+                            }
                             break;
                         default:
                             break;
@@ -447,6 +497,8 @@ public class NewDapaParser extends Parser {
         }
 
         String license = parseLicenseInfo(doc); // 면허명칭
+        long aPrice = Long.parseLong(medPrice) + Long.parseLong(pensionPrice) + Long.parseLong(retirePrice) + Long.parseLong(retireSubPrice) +
+                Long.parseLong(safetyPrice) + Long.parseLong(helpPrice) + Long.parseLong(welfarePrice);
 
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("UPDATE dapabidinfo SET ");
@@ -462,6 +514,7 @@ public class NewDapaParser extends Parser {
             sqlBuilder.append("상한=" + upperBound + ", ");
         }
         sqlBuilder.append("사전심사=\"" + prelim + "\", ");
+        sqlBuilder.append("A값=" + aPrice + ", ");
         sqlBuilder.append("면허명칭=\"" + license + "\", ");
         if (!rate.equals("")) {
             sqlBuilder.append("낙찰하한율=" + rate + ", ");
@@ -673,6 +726,7 @@ public class NewDapaParser extends Parser {
         JSONObject jsonData = new JSONObject(doc.body().text());
         JSONArray dataArray = jsonData.getJSONArray("list");
         List bidEntries = getBidEntriesFromJsonArray(dataArray);
+        HashMap<String, Integer> map = new HashMap<>();
         while (!bidEntries.isEmpty()) {
             for (Object entry : bidEntries) {
                 if (shutdown) {
@@ -697,6 +751,7 @@ public class NewDapaParser extends Parser {
                 String bidVer = resEntry.bidInfo.get("rqstDegr"); // 차수
                 String idenNum = resEntry.bidInfo.get("dcsnNumb"); // 공사번호
                 String itemNum = resEntry.bidInfo.get("dmstItnb"); // 항목번호
+                String ordrYear = resEntry.bidInfo.get("ordrYear");
                 String bidType = resEntry.bidInfo.get("lvDivs2").equals("NEGO") ? "협상" : "경쟁"; // 입찰종류
                 String annType = resEntry.bidInfo.get("anmtDivsNm"); // 공고종류
                 String org = resEntry.bidInfo.get("dprtCodeNm"); // 발주기관
@@ -705,6 +760,8 @@ public class NewDapaParser extends Parser {
                 String compType = resEntry.bidInfo.get("contMthdNm"); // 계약방법
                 String selectMethod = resEntry.bidInfo.get("bidnMthdNm"); // 낙찰자결정방법
                 String openDate = resEntry.bidInfo.get("bidxDatm"); // 개찰일시
+                String dprtCode = resEntry.bidInfo.get("dprtCode");
+                String g2bNum = ordrYear + dprtCode + idenNum;
                 openDate = openDate.substring(0, 4) + "-" + openDate.substring(4, 6) + "-" + openDate.substring(6, 8)
                         + " " + openDate.substring(8, 10) + ":" + openDate.substring(10, 12);
 
@@ -715,10 +772,16 @@ public class NewDapaParser extends Parser {
                 String where = "WHERE 공고번호=\""+bidNum+"\" AND " +
                         "차수="+bidVer+" AND " +
                         "공사번호=\""+idenNum+"\" AND " +
-                        "항목번호=\""+itemNum+"\"";
+                        "항목번호=\""+itemNum+"\" AND 통합참조번호=\"" + g2bNum + "\" AND 연도=" + ordrYear;
                 String sql = "SELECT EXISTS(SELECT 공고번호 FROM dapabidinfo "+where+");";
                 rs = st.executeQuery(sql);
                 if (rs.first()) exists = rs.getBoolean(1);
+
+                if (!map.containsKey(where)) {
+                    map.put(where, 0);
+                }
+
+                map.put(where, map.get(where) + 1);
 
                 if (exists) {
                     // Check the bid version and update level from the DB.
@@ -743,7 +806,7 @@ public class NewDapaParser extends Parser {
                     }
                 } else {
                     // If entry doesn't exists in db, insert new row.
-                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공사번호, 입찰종류, 공고종류, 발주기관, 개찰일시, 입찰방법, 계약방법, 입찰결과";
+                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공사번호, 입찰종류, 공고종류, 발주기관, 개찰일시, 입찰방법, 계약방법, 입찰결과, 통합참조번호, 연도";
                     if (selectMethod.length() > 1) {
                         sql += ", 낙찰자결정방법";
                     }
@@ -759,7 +822,9 @@ public class NewDapaParser extends Parser {
                             "\""+openDate+"\", " +
                             "\""+bidMethod+"\", " +
                             "\""+compType+"\", " +
-                            "\""+result+"\"";
+                            "\""+result+"\", " +
+                            "\""+g2bNum+"\", " +
+                            ordrYear+"";
                     if (selectMethod.length() > 1) {
                         sql += ", \"" + selectMethod + "\"";
                     }
@@ -833,6 +898,13 @@ public class NewDapaParser extends Parser {
             jsonData = new JSONObject(doc.body().text());
             dataArray = jsonData.getJSONArray("list");
             bidEntries = getBidEntriesFromJsonArray(dataArray);
+        }
+
+        Iterator it = map.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            System.out.println("SELECT * FROM dapabidinfo " + pair.getKey() + ";");
+            it.remove(); // avoids a ConcurrentModificationException
         }
     }
 

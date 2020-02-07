@@ -116,15 +116,15 @@ public class DataPanel extends JPanel {
             }
             DefaultTableCellRenderer leftRender = new DefaultTableCellRenderer();
             leftRender.setHorizontalAlignment(SwingConstants.LEFT);
-            if ((i < 4 || i > 9) && (i < 19 || i > 23)) {
+            if ((i < 4 || i > 10) && (i < 20 || i > 24)) {
                 columnModel.getColumn(i).setCellRenderer(leftRender);
             }
 
             if (i == 3) width = 50;
-            if (i > 13 && i < 16) {
+            if (i > 14 && i < 17) {
                 if (width > 100) width = 100;
             }
-            if (width > 150) width = 150;
+            if (width > 180) width = 180;
 
             columnModel.getColumn(i).setPreferredWidth(width);
         }

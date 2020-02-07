@@ -155,14 +155,14 @@ public class LetsParser extends Parser {
 
     private Document getResListPage(int page) throws IOException {
         String path = LetsParser.RES_LIST;
-        openConnection(path, "POST");
         URIBuilder builder = new URIBuilder();
         builder.addParameter("page", page + "");
         builder.addParameter("is_from_main", "true");
         builder.addParameter("open_date_from", sd);
         builder.addParameter("open_date_to", ed);
         String param = builder.toString();
-        return Jsoup.parse(getResponse(param, "POST"));
+        openConnection(path + param, "GET");
+        return Jsoup.parse(getResponse(null, "GET"));
     }
 
     public void getList() throws IOException, SQLException {
@@ -313,6 +313,8 @@ public class LetsParser extends Parser {
             String compType = listItems.get("compType"); // 계약방법
             String openDate = listItems.get("openDate"); // 개찰일시
             String result = listItems.get("result"); // 개찰상태
+
+            System.out.println(bidno);
 
             if (frame != null) frame.updateInfo(bidno, true);
             if (checkFrame != null) {
@@ -668,10 +670,10 @@ public class LetsParser extends Parser {
 
     public int getTotal() throws IOException {
         String path = LetsParser.RES_LIST;
-        String param = "is_from_main=true&page=1&open_date_from="+sd+"&open_date_to="+ed;
+        String param = "?is_from_main=true&page=1&open_date_from="+sd+"&open_date_to="+ed;
 
-        openConnection(path, "POST");
-        Document doc = Jsoup.parse(getResponse(param, "POST"));
+        openConnection(path + param, "GET");
+        Document doc = Jsoup.parse(getResponse(null, "GET"));
         Element pagingdiv = doc.getElementsByAttributeValue("class", "bid_paging").first();
         Element lastButton = pagingdiv.getElementsByAttributeValue("class", "btns last_page").first();
         if (lastButton != null) {

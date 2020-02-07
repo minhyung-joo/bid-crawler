@@ -68,10 +68,10 @@ public class GetFrame extends JFrame {
         panel.setLayout(new BorderLayout());
         autoCheck = new JCheckBox("자동");
         startDate = new JDatePicker(Calendar.getInstance().getTime());
-        startDate.setTextfieldColumns(12);
+        startDate.setTextfieldColumns(8);
         startDate.setTextEditable(true);
         endDate = new JDatePicker(Calendar.getInstance().getTime());
-        endDate.setTextfieldColumns(12);
+        endDate.setTextfieldColumns(8);
         endDate.setTextEditable(true);
         reps = new JTextArea(1, 5);
         reps.setText("60");
@@ -132,7 +132,7 @@ public class GetFrame extends JFrame {
             }
         });
         this.add(panel);
-        this.setSize(400, 300);
+        this.setSize(300, 300);
         this.setResizable(false);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setVisible(true);
