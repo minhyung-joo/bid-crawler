@@ -293,6 +293,7 @@ public class ExParser extends Parser {
             String mustCommon = ""; // 공동수급의무여부
             String openDate = ""; // 개찰일시
             String protoPrice = ""; // 설계금액
+            String aPrice = "0"; // A값
 
             Elements tables = doc.getElementsByTag("caption");
             for (int j = 0; j < tables.size(); j++) {
@@ -401,6 +402,11 @@ public class ExParser extends Parser {
                 else if (key.equals("개찰일시")) {
                     openDate = h.nextElementSibling().text() + ":00";
                 }
+                else if (key.equals("A값")) {
+                    aPrice = h.nextElementSibling().text();
+                    aPrice = aPrice.replaceAll("[^\\d.]", "");
+                    if (aPrice.equals("")) aPrice = "0";
+                }
             }
 
             String sql = "UPDATE exbidinfo SET 공고=1, " +
@@ -412,6 +418,7 @@ public class ExParser extends Parser {
                     "현장설명실시여부=\"" + fieldTour + "\", " +
                     "공동수급의무여부=\"" + mustCommon + "\", " +
                     "설계금액=" + protoPrice + ", " +
+                    "A값=" + aPrice + ", " +
                     "개찰일시=\"" + openDate + "\" " + where;
             System.out.println(sql);
             st.executeUpdate(sql);

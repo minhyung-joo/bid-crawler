@@ -257,8 +257,7 @@ public class Util {
             sqlBuilder.append("분류=\"" + workType + "\" AND ");
         }
         if (lowerBound != null && upperBound != null) {
-            String rate = lowerBound + " ~ " + upperBound;
-            sqlBuilder.append("사정률=\"" + rate + "\" AND ");
+            sqlBuilder.append("하한=\"" + lowerBound + "\" AND 상한=\"" + upperBound + "\" AND ");
         }
         if (!bidType.equals("전체")) {
             sqlBuilder.append("입찰종류=\"" + bidType + "\" AND ");
