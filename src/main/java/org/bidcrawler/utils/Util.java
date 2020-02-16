@@ -370,13 +370,13 @@ public class Util {
 
         // Add unopened notis
         sqlBuilder.append("UNION SELECT * FROM railnetbidinfo WHERE ");
-        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 실제개찰일시, 개찰일시, 공고번호");
         return sqlBuilder.toString();
     }
 
     public static Object[] getDapaRow(CachedRowSet cachedRowSet, int index) throws SQLException {
         String bidno = cachedRowSet.getString("공고번호");
-        String date = cachedRowSet.getString("개찰일시");
+        String date = cachedRowSet.getString("실제개찰일시");
         if (date.length() == 21) {
             date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
         }
@@ -779,7 +779,7 @@ public class Util {
 
     public static Object[] getRailnetRow(CachedRowSet cachedRowSet, int index) throws SQLException {
         String bidno = cachedRowSet.getString("공고번호");
-        String date = cachedRowSet.getString("개찰일시");
+        String date = cachedRowSet.getString("실제개찰일시");
         if (date.length() == 21) {
             date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
         }
@@ -835,6 +835,9 @@ public class Util {
 
         String comp = "-";
         String eDate = cachedRowSet.getString("개찰일시");
+        if (eDate.length() == 21) {
+            eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
+        }
         String prog = cachedRowSet.getString("개찰결과");
         String annOrg = cachedRowSet.getString("공고기관");
         String demOrg = cachedRowSet.getString("수요기관");

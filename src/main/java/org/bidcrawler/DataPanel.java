@@ -3,7 +3,7 @@ package org.bidcrawler;
 /**
  * Created by ravenjoo on 6/24/17.
  */
-import com.sun.rowset.CachedRowSetImpl;
+import javax.sql.rowset.RowSetProvider;
 import org.bidcrawler.utils.Util;
 import org.jdatepicker.DatePicker;
 import org.jdatepicker.JDatePicker;
@@ -55,7 +55,7 @@ public class DataPanel extends JPanel {
         this.type = type;
         this.setLayout(new BorderLayout());
 
-        cachedRowSet = new CachedRowSetImpl();
+        cachedRowSet = RowSetProvider.newFactory().createCachedRowSet();
         searchPanels = new ArrayList<>(10);
 
         optionPanel = new JPanel();

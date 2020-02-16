@@ -38,7 +38,7 @@ public class Main extends JFrame {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         }
 
-        UIManager.getLookAndFeel().getDefaults().put("defaultFont", new Font(null, Font.PLAIN, 20));
+        UIManager.getLookAndFeel().getDefaults().put("defaultFont", new Font(null, Font.PLAIN, 14));
 
         initializeMenuBar();
         initializeTabbedPane();

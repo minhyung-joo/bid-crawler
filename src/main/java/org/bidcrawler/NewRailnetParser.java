@@ -150,7 +150,7 @@ public class NewRailnetParser extends Parser
         Element countDiv = doc.getElementsByClass("grid_count").first();
         Elements spans = countDiv.getElementsByTag("span");
         if (spans.size() == 2) {
-            String items = ((Element)spans.get(1)).text().replaceAll("[^\\d.-]", "");
+            String items = spans.get(1).text().replaceAll("[^\\d.-]", "");
             if (Util.isNumeric(items)) {
                 totalItems = Integer.parseInt(items);
                 int currentItem = 1;
@@ -292,6 +292,7 @@ public class NewRailnetParser extends Parser
         sqlBuilder.append("낙찰자선정방식=\"" + selectMethod + "\", ");
         sqlBuilder.append("심사기준=\"" + prelim + "\", ");
         sqlBuilder.append("낙찰하한율=\"" + rate + "\", ");
+        sqlBuilder.append("실제개찰일시=\"" + openDate + "\", ");
         sqlBuilder.append("개찰일시=\"" + openDate + "\", 공고=1 ");
         sqlBuilder.append(where);
         String sql = sqlBuilder.toString();
@@ -503,6 +504,7 @@ public class NewRailnetParser extends Parser
                             case "개찰일시":
                                 openDate = header.nextElementSibling().text();
                                 fields.put("개찰일시", "\"" + openDate + "\"");
+                                fields.put("실제개찰일시", "\"" + openDate + "\"");
                                 break;
                             case "예정가격":
                                 basePrice = Util.convertToNumeric(header.nextElementSibling().text());

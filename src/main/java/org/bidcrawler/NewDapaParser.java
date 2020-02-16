@@ -432,10 +432,10 @@ public class NewDapaParser extends Parser {
                             upperBound = bounds[1];
                             break;
                         case "하한(%)":
-                            lowerBound = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            lowerBound = header.nextElementSibling().text().replaceAll("[^\\.\\-0123456789]", "");
                             break;
                         case "상한(%)":
-                            upperBound = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
+                            upperBound = header.nextElementSibling().text().replaceAll("[^\\.\\-0123456789]", "");
                             break;
                         case "낙찰하한율(%)":
                             rate = header.nextElementSibling().text().replaceAll("[^\\.0123456789]", "");
@@ -806,7 +806,7 @@ public class NewDapaParser extends Parser {
                     }
                 } else {
                     // If entry doesn't exists in db, insert new row.
-                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공사번호, 입찰종류, 공고종류, 발주기관, 개찰일시, 입찰방법, 계약방법, 입찰결과, 통합참조번호, 연도";
+                    sql = "INSERT INTO dapabidinfo (분류, 공고번호, 차수, 항목번호, 공사번호, 입찰종류, 공고종류, 발주기관, 개찰일시, 실제개찰일시, 입찰방법, 계약방법, 입찰결과, 통합참조번호, 연도";
                     if (selectMethod.length() > 1) {
                         sql += ", 낙찰자결정방법";
                     }
@@ -819,6 +819,7 @@ public class NewDapaParser extends Parser {
                             "\""+bidType+"\", " +
                             "\""+annType+"\", " +
                             "\""+org+"\", " +
+                            "\""+openDate+"\", " +
                             "\""+openDate+"\", " +
                             "\""+bidMethod+"\", " +
                             "\""+compType+"\", " +
@@ -1192,11 +1193,11 @@ public class NewDapaParser extends Parser {
                     }
                     if (header.text().equals("상한(%)")) {
                         upperBound = header.nextElementSibling().text();
-                        upperBound = upperBound.replaceAll("[^\\.0123456789]","");
+                        upperBound = upperBound.replaceAll("[^\\.\\-0123456789]","");
                     }
                     if (header.text().equals("하한(%)")) {
                         lowerBound = header.nextElementSibling().text();
-                        lowerBound = lowerBound.replaceAll("[^\\.0123456789]","");
+                        lowerBound = lowerBound.replaceAll("[^\\.\\-0123456789]","");
                     }
                     if (header.text().equals("낙찰하한율(%)")) {
                         rate = header.nextElementSibling().text();

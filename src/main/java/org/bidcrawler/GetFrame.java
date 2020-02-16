@@ -159,52 +159,58 @@ public class GetFrame extends JFrame {
     private class UpdateListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if (!running) {
-                String sd = "";
-                String ed = "";
-                es = Executors.newFixedThreadPool(1);
-                curCount = "0";
+                new Thread(() -> {
+                    String sd = "";
+                    String ed = "";
+                    es = Executors.newFixedThreadPool(1);
+                    curCount = "0";
 
-                if ((startDate.getModel().getValue() == null) || (endDate.getModel().getValue() == null)) {
-                    JOptionPane.showMessageDialog(null, "날짜를 설정해주십시오.");
-                    return;
-                }
-                else {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    sd = sdf.format(startDate.getModel().getValue());
-                    ed = sdf.format(endDate.getModel().getValue());
-                }
-
-                try {
-                    if (site.equals("국방조달청")) {
-                        parser = new NewDapaParser(sd, ed, "", frame, null);
+                    if ((startDate.getModel().getValue() == null) || (endDate.getModel().getValue() == null)) {
+                        JOptionPane.showMessageDialog(null, "날짜를 설정해주십시오.");
+                        return;
                     }
-                    else if (site.equals("한국마사회")) {
-                        parser = new LetsParser(sd, ed, "", frame, null);
-                    }
-                    else if (site.equals("LH공사")) {
-                        sd = sd.replaceAll("-", "/");
-                        ed = ed.replaceAll("-", "/");
-                        parser = new NewLHParser(sd, ed, "", frame, null);
-                    }
-                    else if (site.equals("도로공사")) {
-                        parser = new ExParser(sd, ed, "", frame, null);
-                    }
-                    else if (site.equals("철도시설공단")) {
-                        parser = new NewRailnetParser(sd, ed, "", frame, null);
+                    else {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        sd = sdf.format(startDate.getModel().getValue());
+                        ed = sdf.format(endDate.getModel().getValue());
                     }
 
-                    totalCount = "" + parser.getTotal();
+                    try {
+                        if (site.equals("국방조달청")) {
+                            parser = new NewDapaParser(sd, ed, "", frame, null);
+                        }
+                        else if (site.equals("한국마사회")) {
+                            parser = new LetsParser(sd, ed, "", frame, null);
+                        }
+                        else if (site.equals("LH공사")) {
+                            sd = sd.replaceAll("-", "/");
+                            ed = ed.replaceAll("-", "/");
+                            parser = new NewLHParser(sd, ed, "", frame, null);
+                        }
+                        else if (site.equals("도로공사")) {
+                            parser = new ExParser(sd, ed, "", frame, null);
+                        }
+                        else if (site.equals("철도시설공단")) {
+                            parser = new NewRailnetParser(sd, ed, "", frame, null);
+                        }
 
-                    es.submit(parser);
+                        totalCount = "" + parser.getTotal();
 
-                } catch (ClassNotFoundException | SQLException | IOException e1) {
-                    Logger.getGlobal().log(Level.WARNING, e1.getMessage());
-                    e1.printStackTrace();
-                }
+                        es.submit(parser);
 
-                count.setText(curCount + " / " + totalCount);
-                running = true;
+                    } catch (ClassNotFoundException | SQLException | IOException e1) {
+                        Logger.getGlobal().log(Level.WARNING, e1.getMessage());
+                        e1.printStackTrace();
+                    }
+
+                    count.setText(curCount + " / " + totalCount);
+
+                    running = true;
+                    toggle.setEnabled(true);
+                }).start();
+
                 toggle.setText("중지");
+                toggle.setEnabled(false);
             }
             else if (running) {
                 if (parser != null) {
