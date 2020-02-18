@@ -60,7 +60,7 @@ public class MonthCheckFrame extends CheckFrame {
         panel.add(datePanel, "South");
 
         add(panel);
-        setSize(400, 510);
+        setSize(350, 450);
         setResizable(false);
         setDefaultCloseOperation(2);
         setVisible(true);

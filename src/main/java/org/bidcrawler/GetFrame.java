@@ -132,7 +132,7 @@ public class GetFrame extends JFrame {
             }
         });
         this.add(panel);
-        this.setSize(300, 300);
+        this.setSize(250, 280);
         this.setResizable(false);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setVisible(true);
