@@ -159,8 +159,12 @@ public class NewRailnetParser extends Parser
 
                 while (currentItem <= totalItems) {
                     for (Element itemRow : itemRows) {
-                        Element anchor = itemRow.getElementsByTag("a").first();
+                        if (itemRow.text().contains("자료가 없습니다")) {
+                            currentItem++;
+                            continue;
+                        }
 
+                        Element anchor = itemRow.getElementsByTag("a").first();
                         String link = anchor.attr("href");
                         String[] linkData = link.split("'");
                         String gyErBeonho = Util.convertToNumeric(linkData[1]);
