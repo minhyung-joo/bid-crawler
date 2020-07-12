@@ -904,7 +904,7 @@ public class NewDapaParser extends Parser {
         Iterator it = map.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
-            System.out.println("SELECT * FROM dapabidinfo " + pair.getKey() + ";");
+            System.out.println("SELECT * FROM dapabidinfo " + pair.getKey() + "; # " + pair.getValue());
             it.remove(); // avoids a ConcurrentModificationException
         }
     }
@@ -1578,12 +1578,14 @@ public class NewDapaParser extends Parser {
                         }
                     }
 
-                    bidNums.remove(i);
-                    bidVers.remove(i);
-                    idenNums.remove(i);
-                    itemNums.remove(i);
-                    years.remove(i);
-                    g2bNums.remove(i);
+                    if (bidNums.size() > i) {
+                        bidNums.remove(i);
+                        bidVers.remove(i);
+                        idenNums.remove(i);
+                        itemNums.remove(i);
+                        years.remove(i);
+                        g2bNums.remove(i);
+                    }
                 }
 
                 // Get new page

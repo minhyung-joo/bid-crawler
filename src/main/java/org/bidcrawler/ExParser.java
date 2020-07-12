@@ -34,7 +34,7 @@ public class ExParser extends Parser {
     final static String RES_INF = "/bidResult/";
 
     final static String CONST_PRICE = "http://ebid.ex.co.kr/ebid/jsps/ebid/const/bidResult/bidResultNego.jsp?";
-    final static String SERV_PRICE = "http://ebid.ex.co.kr/ebid/jsps/ebid/serv/bidResult/bidResultNego2.jsp?";
+    final static String SERV_PRICE = "http://ebid.ex.co.kr/ebid/jsps/ebid/serv/bidResult/bidResultNego.jsp?";
     final static String BUY_PRICE = "http://ebid.ex.co.kr/ebid/jsps/ebid/buy/bidResult/bidResultNego.jsp?";
 
     // For SQL setup.
@@ -143,7 +143,6 @@ public class ExParser extends Parser {
 
         Document doc = Jsoup.parse(sendGetRequest(path));
         totalItems = Integer.parseInt(doc.getElementsByClass("totalCount_001").first().text().split("건")[0].replaceAll("[^\\d]", ""));
-        System.out.println("전체 건 : " + totalItems);
         Element listing = doc.getElementsByTag("table").get(0);
         Elements rows = listing.getElementsByTag("tr");
 
@@ -198,14 +197,16 @@ public class ExParser extends Parser {
             if (rs.first()) exists = rs.getBoolean(1);
 
             if (exists) {
-                // Check the bid version and update level from the DB.
-                sql = "SELECT 공고 FROM exbidinfo " + where;
-                rs = st.executeQuery(sql);
-                int finished = 0;
-                if (rs.first()) {
-                    finished = rs.getInt(1);
+                if (!prog.equals("정정공고중")) {
+                    // Check the bid version and update level from the DB.
+                    sql = "SELECT 공고 FROM exbidinfo " + where;
+                    rs = st.executeQuery(sql);
+                    int finished = 0;
+                    if (rs.first()) {
+                        finished = rs.getInt(1);
+                    }
+                    if (finished > 0) enter = false;
                 }
-                if (finished > 0) enter = false;
             }
             else {
                 sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 공고상태, 중복번호) VALUES (" +
@@ -282,8 +283,6 @@ public class ExParser extends Parser {
 
     public void parseInfo(Document doc, String itempath, String where, int dup) throws SQLException, IOException {
         if (it.equals("공고")) {
-            System.out.println(doc.html());
-
             String annDate = ""; // 공고일자
             String hasDup = ""; // 복수예가적용여부
             String hasRebid = ""; // 재입찰허용여부
@@ -548,23 +547,26 @@ public class ExParser extends Parser {
                 if (dateHeader == null) {
                     dateHeader = pricePage.getElementsContainingOwnText("개찰일시").first();
                 }
-                String openDate = dateHeader.nextElementSibling().text().trim();
-                String sql = "UPDATE exbidinfo SET 개찰일시=\"" + openDate + "\" " + where;
-                System.out.println(sql);
-                st.executeUpdate(sql);
 
-                Element priceTable = pricePage.getElementsByAttributeValue("class", "print_table").first();
-                if (priceTable != null) {
-                    Element priceData = priceTable.getElementsByTag("td").get(3);
-                    for (String s : priceData.text().split(" ")) {
-                        if (s.contains(")")) {
-                            String ind = s.split("\\)")[0];
-                            String price = s.split("\\)")[1];
+                if (dateHeader != null) {
+                    String openDate = dateHeader.nextElementSibling().text().trim();
+                    String sql = "UPDATE exbidinfo SET 개찰일시=\"" + openDate + "\" " + where;
+                    System.out.println(sql);
+                    st.executeUpdate(sql);
 
-                            ind = ind.replaceAll("[^\\d]", "");
-                            price = price.replaceAll("[^\\d.]", "");
-                            sql = "UPDATE exbidinfo SET 복수"+ind+"="+price+" " + where;
-                            st.executeUpdate(sql);
+                    Element priceTable = pricePage.getElementsByAttributeValue("class", "print_table").first();
+                    if (priceTable != null) {
+                        Element priceData = priceTable.getElementsByTag("td").get(3);
+                        for (String s : priceData.text().split(" ")) {
+                            if (s.contains(")")) {
+                                String ind = s.split("\\)")[0];
+                                String price = s.split("\\)")[1];
+
+                                ind = ind.replaceAll("[^\\d]", "");
+                                price = price.replaceAll("[^\\d.]", "");
+                                sql = "UPDATE exbidinfo SET 복수"+ind+"="+price+" " + where;
+                                st.executeUpdate(sql);
+                            }
                         }
                     }
                 }
@@ -620,7 +622,7 @@ public class ExParser extends Parser {
             if (checkFrame != null && !shutdown) {
                 checkFrame.signalFinish();
             }
-        } catch (IOException | SQLException e) {
+        } catch (Exception e) {
             Logger.getGlobal().log(Level.WARNING, e.getMessage());
             if (frame != null && !shutdown) {
                 frame.toggleButton();
