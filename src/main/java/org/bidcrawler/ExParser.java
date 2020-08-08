@@ -294,6 +294,20 @@ public class ExParser extends Parser {
             String protoPrice = ""; // 설계금액
             String aPrice = "0"; // A값
 
+            String workNum = null;
+            String contNum = null;
+            Elements workNumElements = doc.getElementsContainingOwnText("과업관련문의");
+            if (workNumElements.size() > 0) {
+                String numText = workNumElements.get(0).nextElementSibling().text();
+                workNum = numText.substring(numText.indexOf('(') + 1, numText.indexOf(')'));
+            }
+
+            Elements contNumElements = doc.getElementsContainingOwnText("계약관련문의");
+            if (contNumElements.size() > 0) {
+                String numText = contNumElements.get(0).nextElementSibling().text();
+                contNum = numText.substring(numText.indexOf('(') + 1, numText.indexOf(')'));
+            }
+
             Elements tables = doc.getElementsByTag("caption");
             for (int j = 0; j < tables.size(); j++) {
                 String caption = tables.get(j).text();
@@ -417,8 +431,15 @@ public class ExParser extends Parser {
                     "현장설명실시여부=\"" + fieldTour + "\", " +
                     "공동수급의무여부=\"" + mustCommon + "\", " +
                     "설계금액=" + protoPrice + ", " +
-                    "A값=" + aPrice + ", " +
-                    "개찰일시=\"" + openDate + "\" " + where;
+                    "A값=" + aPrice + ", ";
+            if (workNum != null) {
+                sql += "과업관련문의=\"" + workNum + "\", ";
+            }
+            if (contNum != null) {
+                sql += "계약관련문의=\"" + contNum + "\", ";
+            }
+
+            sql += "개찰일시=\"" + openDate + "\" " + where;
             System.out.println(sql);
             st.executeUpdate(sql);
         }
@@ -524,7 +545,7 @@ public class ExParser extends Parser {
                     expPrice = expPrice.replaceAll("[^\\d.]", "");
                     if (expPrice.equals("")) expPrice = "0";
                 }
-                else if (key.equals("설계가격")) {
+                else if (key.equals("설계가격") || key.equals("설계금액")) {
                     protoPrice = h.nextElementSibling().text();
                     protoPrice = protoPrice.replaceAll("[^\\d.]", "");
                     if (protoPrice.equals("")) protoPrice = "0";
@@ -586,11 +607,19 @@ public class ExParser extends Parser {
             }
 
             String sql = "UPDATE exbidinfo SET 완료=1, " +
-                    "공고일자=\"" + annDate + "\", " +
-                    "예정가격=" + expPrice + ", " +
-                    "설계금액=" + protoPrice + ", " +
-                    "투찰금액=" + bidPrice + ", " +
-                    "참가수=" + comp + " " + where;
+                    "공고일자=\"" + annDate + "\", ";
+
+            if (!expPrice.equals("0")) {
+                sql += "예정가격=" + expPrice + ", ";
+            }
+            if (!protoPrice.equals("0")) {
+                sql += "설계금액=" + protoPrice + ", ";
+            }
+            if (!bidPrice.equals("0")) {
+                sql += "투찰금액=" + bidPrice + ", ";
+            }
+
+            sql += "참가수=" + comp + " " + where;
             st.executeUpdate(sql);
         }
     }

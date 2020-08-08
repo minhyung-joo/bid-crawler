@@ -214,15 +214,6 @@ public class Util {
             if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
         }
 
-        Date dateCheck = rs.getDate("개찰일시");
-        Calendar passCalendar = Calendar.getInstance();
-        passCalendar.set(Calendar.HOUR_OF_DAY, 0);
-        passCalendar.set(Calendar.MINUTE, 0);
-        passCalendar.set(Calendar.SECOND, 0);
-        passCalendar.set(Calendar.MILLISECOND, 0);
-        Date passDate = passCalendar.getTime();
-        if (dateCheck.after(passDate)) valid = true;
-
         return valid;
     }
 
@@ -690,6 +681,7 @@ public class Util {
 
     public static Object[] getExRow(CachedRowSet cachedRowSet, int index) throws SQLException {
         String bidno = cachedRowSet.getString("공고번호");
+        System.out.println(bidno);
         String date = cachedRowSet.getString("개찰일시");
         if (date.length() == 21) {
             date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);

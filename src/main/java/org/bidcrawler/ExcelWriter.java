@@ -66,7 +66,7 @@ public class ExcelWriter {
         HSSFDataFormat moneyFormat = (HSSFDataFormat) workbook.createDataFormat();
         money.setDataFormat(moneyFormat.getFormat(BuiltinFormats.getBuiltinFormat(3)));
         sdf = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd");
         today = todayFormat.format(new Date());
     }
 
@@ -196,8 +196,8 @@ public class ExcelWriter {
             columnNames.createCell(cellIndex++).setCellValue("공동수급 가능여부");
             columnNames.createCell(cellIndex++).setCellValue("현장설명실시여부");
             columnNames.createCell(cellIndex++).setCellValue("공동수급 의무여부");
-            columnNames.createCell(cellIndex++).setCellValue("");
-            columnNames.createCell(cellIndex++).setCellValue("");
+            columnNames.createCell(cellIndex++).setCellValue("과업관련문의");
+            columnNames.createCell(cellIndex++).setCellValue("계약관련문의");
             columnNames.createCell(cellIndex++).setCellValue("");
             columnNames.createCell(cellIndex++).setCellValue("");
             columnNames.createCell(cellIndex++).setCellValue("");
@@ -362,7 +362,7 @@ public class ExcelWriter {
 
     private void nameExFile() {
         name = "한국도로공사";
-        if (org != null) {
+        if (org != null && !org.equals("")) {
             name += " " + org;
         }
 
@@ -384,7 +384,7 @@ public class ExcelWriter {
 
     private void nameLhFile() {
         name = "한국토지주택공사";
-        if (org != null) {
+        if (org != null && !org.equals("")) {
             name += " " + org;
         }
 
@@ -406,7 +406,7 @@ public class ExcelWriter {
 
     private void nameLetsrunFile() {
         name = "한국마사회";
-        if (org != null) {
+        if (org != null && !org.equals("")) {
             name += " " + org;
         }
 
@@ -428,14 +428,15 @@ public class ExcelWriter {
 
     private void nameDapaFile() {
         name = "국방조달청";
-        if (org != null) {
-            name += " " + org;
+        if (org != null && !org.equals("")) {
+            // Replace first word with org
+            name = org;
         }
 
         if (bidType == null) {
-            name += "(전체) ";
+            name += " (전체) ";
         } else {
-            name += "(" + bidType + ") ";
+            name += " (" + bidType + ") ";
         }
 
         if (workType == null) {
@@ -946,8 +947,8 @@ public class ExcelWriter {
             row.createCell(cellIndex++).setCellValue(rs.getString("공동수급가능여부"));
             row.createCell(cellIndex++).setCellValue(rs.getString("현장설명실시여부"));
             row.createCell(cellIndex++).setCellValue(rs.getString("공동수급의무여부"));
-            row.createCell(cellIndex++).setCellValue("");
-            row.createCell(cellIndex++).setCellValue("");
+            row.createCell(cellIndex++).setCellValue(rs.getString("과업관련문의"));
+            row.createCell(cellIndex++).setCellValue(rs.getString("계약관련문의"));
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");
             row.createCell(cellIndex++).setCellValue("");

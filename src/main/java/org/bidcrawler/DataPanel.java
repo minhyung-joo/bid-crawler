@@ -339,9 +339,9 @@ public class DataPanel extends JPanel {
                     m.setRowCount(0);
                     int index = 1;
                     while(cachedRowSet.next()) {
-                        if (!Util.checkDataValidity(cachedRowSet, site)) {
-                            continue;
-                        }
+//                        if (!Util.checkDataValidity(cachedRowSet, site)) {
+//                            continue;
+//                        }
 
                         Object[] row = new Object[] {};
                         switch (site) {
@@ -379,7 +379,7 @@ public class DataPanel extends JPanel {
         private class ExcelListener implements ActionListener {
             public void actionPerformed(ActionEvent e) {
                 SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd");
-                String today = todayFormat.format(new Date());
+                String today = todayFormat.format(new Date()) + " 00:00:00";
                 String sd = null;
                 String ed = null;
                 String lowerBound = null;

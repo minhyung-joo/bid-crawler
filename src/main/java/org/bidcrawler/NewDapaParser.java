@@ -902,10 +902,22 @@ public class NewDapaParser extends Parser {
         }
 
         Iterator it = map.entrySet().iterator();
+        StringBuilder sb = new StringBuilder();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
-            System.out.println("SELECT * FROM dapabidinfo " + pair.getKey() + "; # " + pair.getValue());
+            sb.append("SELECT * FROM dapabidinfo ");
+            sb.append(pair.getKey());
+            sb.append(" # ");
+            sb.append(pair.getValue());
+            sb.append("\n");
+            sb.append("UNION");
+            sb.append("\n");
             it.remove(); // avoids a ConcurrentModificationException
+        }
+
+        if (sb.length() > 0) {
+            sb.delete(sb.length() - 7, sb.length());
+            System.out.println(sb.toString());
         }
     }
 

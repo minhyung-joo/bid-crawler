@@ -243,18 +243,14 @@ public class NewLHParser
                 else if (key.equals("개찰일시")) {
                     value = value + ":00";
                 }
-                else if (key.equals("기초금액")) {
+                else if (key.equals("기초금액") || key.equals("설계가격") || key.equals("가격점수제외금액(A)")) {
                     value = value.split(" ")[0];
                     value = value.replaceAll(",", "");
                     value = value.replaceAll("원", "");
                     if (!Util.isInteger(value)) value = "0";
-                    hasBase = true;
-                }
-                else if (key.equals("설계가격")) {
-                    value = value.split(" ")[0];
-                    value = value.replaceAll(",", "");
-                    value = value.replaceAll("원", "");
-                    if (!Util.isInteger(value)) value = "0";
+                    if (key.equals("기초금액")) {
+                        hasBase = true;
+                    }
                 }
                 info.put(key, value);
             }
@@ -262,10 +258,14 @@ public class NewLHParser
 
         String sql = "UPDATE lhbidinfo SET 업종유형=\"" + info.get("업종유형") + "\", 입찰방법=\"" + info.get("입찰방법") + "\", 입찰방식=\"" + info.get("입찰방식") + "\", 낙찰자선정방법=\"" + info.get("낙찰자선정방법") + "\", 재입찰=\"재입찰 없음\", 개찰일시=\"" + info.get("개찰일시") + "\", ";
         if (hasBase) {
-            sql = sql + "기초금액=" + info.get("기초금액") + ", ";
+            sql += "기초금액=" + info.get("기초금액") + ", ";
         }
         else {
-            sql = sql + "기초금액=" + info.get("설계가격") + ", ";
+            sql += "기초금액=" + info.get("설계가격") + ", ";
+        }
+
+        if (info.containsKey("가격점수제외금액(A)")) {
+            sql += "A값=" + info.get("가격점수제외금액(A)") + ", ";
         }
 
         sql = sql + "공고=1 " + where;
@@ -439,7 +439,13 @@ public class NewLHParser
         for (Element d : data) {
             String key = d.text();
             String value = d.nextElementSibling().text().trim();
-            if ((key.equals("설계가격")) || (key.equals("기초금액")) || (key.equals("예정가격")) || (key.equals("공사예산금액"))) {
+            if (
+                    key.equals("설계가격") ||
+                    key.equals("기초금액") ||
+                    key.equals("예정가격") ||
+                    key.equals("공사예산금액") ||
+                    key.equals("가격점수제외금액(A)")
+            ) {
                 value = value.split(" ")[0];
                 value = value.replaceAll(",", "");
                 value = value.replaceAll("원", "");
@@ -532,6 +538,7 @@ public class NewLHParser
         String sql = "UPDATE lhbidinfo SET ";
         if (info.containsKey("기초금액")) sql = sql + "기초금액=" + (String)info.get("기초금액") + ", ";
         if (info.containsKey("예정가격")) sql = sql + "기존예정가격=" + (String)info.get("예정가격") + ", ";
+        if (info.containsKey("가격점수제외금액(A)")) sql = sql + "A값=" + (String)info.get("가격점수제외금액(A)") + ", ";
         sql = sql + "완료=1 " + where;
         System.out.println(sql);
         st.executeUpdate(sql);
