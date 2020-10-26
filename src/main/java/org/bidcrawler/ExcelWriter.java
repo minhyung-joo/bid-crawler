@@ -476,7 +476,9 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!Util.checkDataValidity(rs, site)) continue;
+            if (!Util.checkDataValidity(rs, site)) {
+                continue;
+            }
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;
@@ -982,7 +984,9 @@ public class ExcelWriter {
         int cellIndex = 0;
         int index = 1;
         while(rs.next()) {
-            if (!Util.checkDataValidity(rs, site)) continue;
+            if (!Util.checkDataValidity(rs, site)) {
+                continue;
+            }
 
             Row row = sheet.createRow(rowIndex++);
             cellIndex = 0;

@@ -339,9 +339,9 @@ public class DataPanel extends JPanel {
                     m.setRowCount(0);
                     int index = 1;
                     while(cachedRowSet.next()) {
-//                        if (!Util.checkDataValidity(cachedRowSet, site)) {
-//                            continue;
-//                        }
+                        if (!Util.checkDataValidity(cachedRowSet, site)) {
+                            continue;
+                        }
 
                         Object[] row = new Object[] {};
                         switch (site) {

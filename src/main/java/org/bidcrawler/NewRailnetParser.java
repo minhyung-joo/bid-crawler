@@ -175,6 +175,7 @@ public class NewRailnetParser extends Parser
 
                         Elements itemData = itemRow.getElementsByTag("td");
                         String bidNum = Util.removeWhitespace(itemData.get(2).text()).substring(0, 14);
+                        String openDate = Util.removeWhitespace(itemData.get(6).text());
                         if (frame != null) {
                             frame.updateInfo(bidNum, false);
                         }
@@ -190,7 +191,7 @@ public class NewRailnetParser extends Parser
                                 enter = false;
                             }
                         } else {
-                            sql = "INSERT INTO railnetbidinfo (공고번호, 차수) VALUES (\"" + bidNum + "\", \"" + ggChasu + "\")";
+                            sql = "INSERT INTO railnetbidinfo (공고번호, 차수, 개찰일시) VALUES (\"" + bidNum + "\", \"" + ggChasu + "\", \"" + openDate + "\")";
                             System.out.println(sql);
                             st.executeUpdate(sql);
                         }
@@ -336,6 +337,7 @@ public class NewRailnetParser extends Parser
                         Elements itemData = itemRow.getElementsByTag("td");
                         String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
                         String result = Util.removeWhitespace(((Element)itemData.get(6)).text());
+                        String openDate = Util.removeWhitespace(itemData.get(5).text().substring(0, 10)) + " " + Util.removeWhitespace(itemData.get(5).text().substring(10));
                         if (!rowMap.containsKey(bidNum + ggChasu)) {
                             if (frame != null) {
                                 frame.updateInfo(bidNum, true);
@@ -373,7 +375,7 @@ public class NewRailnetParser extends Parser
                                 st.executeUpdate(sql);
                             }
                         } else {
-                            sql = "INSERT INTO railnetbidinfo (공고번호, 차수, 개찰결과) VALUES (\"" + bidNum + "\", \"" + ggChasu + "\", \"" + result + "\")";
+                            sql = "INSERT INTO railnetbidinfo (공고번호, 차수, 개찰결과, 개찰일시) VALUES (\"" + bidNum + "\", \"" + ggChasu + "\", \"" + result + "\", \"" + openDate + "\")";
                             System.out.println(sql);
                             st.executeUpdate(sql);
                         }

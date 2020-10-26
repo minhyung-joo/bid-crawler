@@ -245,7 +245,7 @@ public class ExParser extends Parser {
                 }
                 if (finished > 0) {
                     if (!dbResult.equals(prog) || !openDate.equals(dbDate.substring(0, 10))) {
-                        dbDate = openDate + " " + dbDate.substring(11);
+                        dbDate = openDate;
                         String sql = "UPDATE exbidinfo SET 결과상태=\"" + prog + "\", 개찰일시=\"" + dbDate + "\" " + where;
                         System.out.println(dbDate);
                         st.executeUpdate(sql);
@@ -556,7 +556,14 @@ public class ExParser extends Parser {
             if (wt.equals("공사") || wt.equals("물품")) buttonDiv = doc.getElementsByAttributeValue("class", "center_btn_area").first();
             else if (wt.equals("용역")) buttonDiv = doc.getElementsByAttributeValue("class", "btn_area").first();
 
-            if (buttonDiv.getElementsContainingText("입찰실시결과").size() > 0 || buttonDiv.getElementsContainingOwnText("입찰결과").size() > 0) {
+            if (buttonDiv == null) {
+                System.out.println(doc.html());
+            }
+
+            if (
+                buttonDiv.getElementsContainingText("입찰실시결과").size() > 0 ||
+                buttonDiv.getElementsContainingOwnText("입찰결과").size() > 0
+            ) {
                 String pricepath = "";
                 if (wt.equals("공사")) pricepath = ExParser.CONST_PRICE;
                 else if (wt.equals("용역")) pricepath = ExParser.SERV_PRICE;

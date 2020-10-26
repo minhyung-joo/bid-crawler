@@ -9,6 +9,7 @@ import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -157,8 +158,6 @@ public class Util {
         if (!bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
             double amount = Double.parseDouble(bPrice);
             baseValue = amount;
-            DecimalFormat formatter = new DecimalFormat("#,###");
-            bPrice = formatter.format(amount);
         }
         else valid = false;
 
@@ -166,6 +165,7 @@ public class Util {
         for (int i = 1; i <= 15; i++) {
             String dupPrice = rs.getString("복수" + i);
             if (dupPrice == null || dupPrice.equals("")) {
+                System.out.println("invalid dupprice");
                 valid = false;
                 break;
             }
@@ -192,8 +192,14 @@ public class Util {
             smallestLB = -2.00;
             smallestUB = -1.70;
 
-            if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
-            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+            if (largestRatio >= largestUB || largestRatio <= largestLB) {
+                System.out.println("invalid ratio " + ratios[14]);
+                valid = false;
+            }
+            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) {
+                System.out.println("invalid ratio " + ratios[0]);
+                valid = false;
+            }
         }
         else if (site.equals("철도시설공단")) {
             largestLB = 2.00;
@@ -212,6 +218,17 @@ public class Util {
 
             if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
             if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+        }
+
+        Date dateCheck = rs.getDate("개찰일시");
+        Calendar passCalendar = Calendar.getInstance();
+        passCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        passCalendar.set(Calendar.MINUTE, 0);
+        passCalendar.set(Calendar.SECOND, 0);
+        passCalendar.set(Calendar.MILLISECOND, 0);
+        Date passDate = passCalendar.getTime();
+        if (dateCheck.after(passDate) || dateCheck.equals(passDate)) {
+            valid = true;
         }
 
         return valid;
@@ -772,8 +789,13 @@ public class Util {
     public static Object[] getRailnetRow(CachedRowSet cachedRowSet, int index) throws SQLException {
         String bidno = cachedRowSet.getString("공고번호");
         String date = cachedRowSet.getString("실제개찰일시");
-        if (date.length() == 21) {
+        if (date != null && date.length() == 21) {
             date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+        } else {
+            date = cachedRowSet.getString("개찰일시");
+            if (date.length() == 21) {
+                date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);
+            }
         }
 
         String limit = "-";
