@@ -36,15 +36,15 @@ public class NewLHParser
     ResultSet rs;
     URL url;
     HttpURLConnection con;
-    static final String BID_ANN = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
-    static final String CONST_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
-    static final String SERV_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
-    static final String MISC_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
-    static final String ITEM_NOTI = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
-    static final String BID_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
-    static final String NORMAL_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
-    static final String NEGO_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
-    static final String TECH_RES = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
+    static final String BID_ANN = "https://m.ebid.lh.or.kr:8443/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
+    static final String CONST_NOTI = "https://m.ebid.lh.or.kr:8443/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
+    static final String SERV_NOTI = "https://m.ebid.lh.or.kr:8443/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
+    static final String MISC_NOTI = "https://m.ebid.lh.or.kr:8443/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
+    static final String ITEM_NOTI = "https://m.ebid.lh.or.kr:8443/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
+    static final String BID_RES = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+    static final String NORMAL_RES = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
+    static final String NEGO_RES = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
+    static final String TECH_RES = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
     String sd;
     String ed;
     String op;
@@ -110,7 +110,7 @@ public class NewLHParser
     }
 
     public void getNoti() throws IOException, SQLException {
-        String path = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidMasterListCmd.dev";
+        String path = BID_ANN;
         String param = "gubun=Y";
         param = param + "&s_tndrdocAcptOpenDtm=" + sd;
         param = param + "&s_tndrdocAcptEndDtm=" + ed;
@@ -187,10 +187,10 @@ public class NewLHParser
 
             if (enter) {
                 String itemPath = "";
-                if (job.equals("10")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidConstructDetailListCmd.dev";
-                } else if (job.equals("20")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidsrvcsDetailListCmd.dev";
-                } else if (job.equals("30")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidgdsDetailListCmd.dev";
-                } else if (job.equals("40")) { itemPath = "http://m.ebid.lh.or.kr/ebid.mo.tp.cmd.MobileBidctrctgdsDetailListCmd.dev";
+                if (job.equals("10")) { itemPath = CONST_NOTI;
+                } else if (job.equals("20")) { itemPath = SERV_NOTI;
+                } else if (job.equals("30")) { itemPath = ITEM_NOTI;
+                } else if (job.equals("40")) { itemPath = MISC_NOTI;
                 }
                 String itemParam = "bidNum=" + bidNum;
                 itemParam = itemParam + "&bidDegree=" + bidDegree;
@@ -277,7 +277,7 @@ public class NewLHParser
     public void getRes() throws IOException, SQLException {
         curItem = 0;
 
-        String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+        String path = BID_RES;
         String param = "gubun=Y";
         param = param + "&s_openDtm1=" + sd;
         param = param + "&s_openDtm2=" + ed;
@@ -387,16 +387,16 @@ public class NewLHParser
                 String itemPath = "";
                 String type = "";
                 if (tndrCtrctMedCd.equals("70")) {
-                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
-                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
+                    itemPath = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
+                    type = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileAllottblScningPrioritytDetailCmd.dev";
                 }
                 else if (tndrCtrctMedCd.equals("90")) {
-                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
-                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
+                    itemPath = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
+                    type = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTknlgPriPriorityDetailCmd.dev";
                 }
                 else {
-                    itemPath = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
-                    type = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
+                    itemPath = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
+                    type = "https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev";
                 }
 
                 String itemParam = "bidNum=" + bidNum;
@@ -514,7 +514,7 @@ public class NewLHParser
                     break;
                 }
 
-                if (type.equals("http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev")) {
+                if (type.equals("https://m.ebid.lh.or.kr:8443/ebid.mo.ts.cmd.MobileTenderOpenDetailCmd.dev")) {
                     if (!((Element)listData.get(6)).text().contains("낙찰하한율미만")) {
                         String bidPrice = ((Element)listData.get(3)).text().split(":")[1].trim();
                         bidPrice = bidPrice.replaceAll(",", "");
@@ -575,7 +575,7 @@ public class NewLHParser
     }
 
     public int getTotal() throws IOException, ClassNotFoundException, SQLException {
-        String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+        String path = BID_RES;
         String param = "gubun=Y";
         param = param + "&s_openDtm1=" + sd;
         param = param + "&s_openDtm2=" + ed;
@@ -632,7 +632,7 @@ public class NewLHParser
                 bidNums.add(rs.getString("공고번호"));
             }
 
-            String path = "http://m.ebid.lh.or.kr/ebid.mo.ts.cmd.MobileTenderOpenListCmd.dev";
+            String path = BID_RES;
             String param = "gubun=Y";
             param = param + "&s_openDtm1=" + sd;
             param = param + "&s_openDtm2=" + ed;

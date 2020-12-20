@@ -6,6 +6,7 @@ package org.bidcrawler;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -13,13 +14,18 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.bidcrawler.utils.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -101,6 +107,35 @@ public class ExParser extends Parser {
 
         HttpResponse response = client.execute(request);
 
+        System.out.println("\nSending 'GET' request to URL : " + path);
+        System.out.println("Response Code : " +
+                response.getStatusLine().getStatusCode());
+
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent(), "euc-kr"));
+
+        StringBuffer result = new StringBuffer();
+        String line = "";
+        while ((line = rd.readLine()) != null) {
+            result.append(line);
+        }
+
+        return result.toString();
+    }
+
+    private String postResultDetail(String path, String[] payload) throws IOException {
+        HttpPost request = new HttpPost(path);
+        request.addHeader("User-Agent", "Mozilla/5.0");
+
+        // Request parameters and other properties.
+        List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+        params.add(new BasicNameValuePair("notino", payload[0]));
+        params.add(new BasicNameValuePair("bidno", payload[1]));
+        params.add(new BasicNameValuePair("bidseq", payload[2]));
+        params.add(new BasicNameValuePair("state", payload[3]));
+        request.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+
+        HttpResponse response = client.execute(request);
         System.out.println("\nSending 'GET' request to URL : " + path);
         System.out.println("Response Code : " +
                 response.getStatusLine().getStatusCode());
@@ -273,12 +308,34 @@ public class ExParser extends Parser {
             }
             else if (it.equals("결과")) {
                 itempath += ExParser.RES_INF;
-                itempath += link.attr("href").substring(2);
+                String linkStr = link.attr("href");
+                System.out.println(linkStr);
+                if (linkStr.charAt(0) == '.') {
+                    itempath += linkStr.substring(2);
+                    Document itemdoc = Jsoup.parse(sendGetRequest(itempath));
+                    parseInfo(itemdoc, itempath, where, 1);
+                } else {
+                    itempath += "bidResultDetail.jsp";
+                    String[] payload = parseLink(link.attr("href"));
+                    Document itemdoc = Jsoup.parse(postResultDetail(itempath, payload));
+                    String payloadStr = "notino=" + payload[0] + "&bidno=" + payload[1] + "&bidseq=" + payload[2] + "&state=" + payload[3];
+                    parseInfo(itemdoc, itempath + "?" + payloadStr, where, 1);
+                }
             }
-
-            Document itemdoc = Jsoup.parse(sendGetRequest(itempath));
-            parseInfo(itemdoc, itempath, where, 1);
         }
+    }
+
+    private String[] parseLink(String link) {
+        if (!link.contains("(")) {
+            return new String[] {};
+        }
+
+        String[] values = link.split("\\(")[1].split("\\)")[0].split(",");
+        for (int i = 0; i < values.length; i++) {
+            values[i] = values[i].replaceAll("\\'", "");
+        }
+
+        return values;
     }
 
     public void parseInfo(Document doc, String itempath, String where, int dup) throws SQLException, IOException {
@@ -560,57 +617,59 @@ public class ExParser extends Parser {
                 System.out.println(doc.html());
             }
 
-            if (
-                buttonDiv.getElementsContainingText("입찰실시결과").size() > 0 ||
-                buttonDiv.getElementsContainingOwnText("입찰결과").size() > 0
-            ) {
-                String pricepath = "";
-                if (wt.equals("공사")) pricepath = ExParser.CONST_PRICE;
-                else if (wt.equals("용역")) pricepath = ExParser.SERV_PRICE;
-                else if (wt.equals("물품")) pricepath = ExParser.BUY_PRICE;
+            if (buttonDiv != null) {
+                if (
+                        buttonDiv.getElementsContainingText("입찰실시결과").size() > 0 ||
+                                buttonDiv.getElementsContainingOwnText("입찰결과").size() > 0
+                ) {
+                    String pricepath = "";
+                    if (wt.equals("공사")) pricepath = ExParser.CONST_PRICE;
+                    else if (wt.equals("용역")) pricepath = ExParser.SERV_PRICE;
+                    else if (wt.equals("물품")) pricepath = ExParser.BUY_PRICE;
 
-                pricepath += itempath.split("\\?")[1];
-                Document pricePage = Jsoup.parse(sendGetRequest(pricepath));
-                Element dateHeader = pricePage.getElementsContainingOwnText("입찰일시").first();
-                if (dateHeader == null) {
-                    dateHeader = pricePage.getElementsContainingOwnText("개찰일시").first();
-                }
+                    pricepath += itempath.split("\\?")[1];
+                    Document pricePage = Jsoup.parse(sendGetRequest(pricepath));
+                    Element dateHeader = pricePage.getElementsContainingOwnText("입찰일시").first();
+                    if (dateHeader == null) {
+                        dateHeader = pricePage.getElementsContainingOwnText("개찰일시").first();
+                    }
 
-                if (dateHeader != null) {
-                    String openDate = dateHeader.nextElementSibling().text().trim();
-                    String sql = "UPDATE exbidinfo SET 개찰일시=\"" + openDate + "\" " + where;
-                    System.out.println(sql);
-                    st.executeUpdate(sql);
+                    if (dateHeader != null) {
+                        String openDate = dateHeader.nextElementSibling().text().trim();
+                        String sql = "UPDATE exbidinfo SET 개찰일시=\"" + openDate + "\" " + where;
+                        System.out.println(sql);
+                        st.executeUpdate(sql);
 
-                    Element priceTable = pricePage.getElementsByAttributeValue("class", "print_table").first();
-                    if (priceTable != null) {
-                        Element priceData = priceTable.getElementsByTag("td").get(3);
-                        for (String s : priceData.text().split(" ")) {
-                            if (s.contains(")")) {
-                                String ind = s.split("\\)")[0];
-                                String price = s.split("\\)")[1];
+                        Element priceTable = pricePage.getElementsByAttributeValue("class", "print_table").first();
+                        if (priceTable != null) {
+                            Element priceData = priceTable.getElementsByTag("td").get(3);
+                            for (String s : priceData.text().split(" ")) {
+                                if (s.contains(")")) {
+                                    String ind = s.split("\\)")[0];
+                                    String price = s.split("\\)")[1];
 
-                                ind = ind.replaceAll("[^\\d]", "");
-                                price = price.replaceAll("[^\\d.]", "");
-                                sql = "UPDATE exbidinfo SET 복수"+ind+"="+price+" " + where;
-                                st.executeUpdate(sql);
+                                    ind = ind.replaceAll("[^\\d]", "");
+                                    price = price.replaceAll("[^\\d.]", "");
+                                    sql = "UPDATE exbidinfo SET 복수"+ind+"="+price+" " + where;
+                                    st.executeUpdate(sql);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (buttonDiv.getElementsContainingText("투찰업체현황").size() > 0) {
-                itempath = itempath.replace("bidResultDetail", "bidResult");
-                itempath = itempath.replace("notino", "p_notino");
-                itempath = itempath.replace("bidno", "p_bidno");
-                itempath = itempath.replace("bidseq", "p_bidseq");
-                itempath = itempath.replace("state", "p_state");
+                if (buttonDiv.getElementsContainingText("투찰업체현황").size() > 0) {
+                    itempath = itempath.replace("bidResultDetail", "bidResult");
+                    itempath = itempath.replace("notino", "p_notino");
+                    itempath = itempath.replace("bidno", "p_bidno");
+                    itempath = itempath.replace("bidseq", "p_bidseq");
+                    itempath = itempath.replace("state", "p_state");
 
-                Document compPage = Jsoup.parse(sendGetRequest(itempath));
-                comp = compPage.getElementsByClass("totalCount_001").first().text();
-                comp = comp.replaceAll("[^\\d]", "");
-                if (comp.equals("")) comp = "0";
+                    Document compPage = Jsoup.parse(sendGetRequest(itempath));
+                    comp = compPage.getElementsByClass("totalCount_001").first().text();
+                    comp = comp.replaceAll("[^\\d]", "");
+                    if (comp.equals("")) comp = "0";
+                }
             }
 
             String sql = "UPDATE exbidinfo SET 완료=1, " +
