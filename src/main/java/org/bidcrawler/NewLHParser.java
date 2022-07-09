@@ -170,7 +170,8 @@ public class NewLHParser
                 }
 
                 if (finished > 0) {
-                    if (dbProg.equals(info.get("진행상태"))) { enter = false;
+                    if (dbProg.equals(info.get("진행상태"))) {
+                        enter = false;
                     } else {
                         sql = "UPDATE lhbidinfo SET 공고현황=\"" + (String)info.get("진행상태") + "\" " + where;
                         st.executeUpdate(sql);

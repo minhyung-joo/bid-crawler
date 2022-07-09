@@ -190,7 +190,7 @@ public class GetFrame extends JFrame {
                         else if (site.equals("도로공사")) {
                             parser = new ExParser(sd, ed, "", frame, null);
                         }
-                        else if (site.equals("철도시설공단")) {
+                        else if (site.equals("국가철도공단")) {
                             parser = new NewRailnetParser(sd, ed, "", frame, null);
                         }
 

@@ -299,7 +299,7 @@ public class DataPanel extends JPanel {
                         case "도로공사":
                             sql = Util.selectEx(org, sd, ed, workType, lowerBound, upperBound, bidType, today);
                             break;
-                        case "철도시설공단":
+                        case "국가철도공단":
                             sql = Util.selectRailnet(org, sd, ed, workType, lowerBound, upperBound, bidType, today);
                             break;
                     }
@@ -326,7 +326,7 @@ public class DataPanel extends JPanel {
                         case "도로공사":
                             columns = Util.EX_COLUMNS;
                             break;
-                        case "철도시설공단":
+                        case "국가철도공단":
                             columns = Util.RAILNET_COLUMNS;
                             break;
                     }
@@ -357,7 +357,7 @@ public class DataPanel extends JPanel {
                             case "도로공사":
                                 row = Util.getExRow(cachedRowSet, index);
                                 break;
-                            case "철도시설공단":
+                            case "국가철도공단":
                                 row = Util.getRailnetRow(cachedRowSet, index);
                                 break;
                         }
@@ -416,7 +416,7 @@ public class DataPanel extends JPanel {
                         case "도로공사":
                             sql = Util.selectEx(org, sd, ed, workType, lowerBound, upperBound, bidType, today);
                             break;
-                        case "철도시설공단":
+                        case "국가철도공단":
                             sql = Util.selectRailnet(org, sd, ed, workType, lowerBound, upperBound, bidType, today);
                             break;
                     }

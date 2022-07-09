@@ -19,6 +19,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,28 +35,28 @@ import java.util.logging.Logger;
  * Created by ravenjoo on 7/22/17.
  */
 public class NewDapaParser extends Parser {
-    public static final String PROD_ANN_LIST = "http://www.d2b.go.kr/pdb/bid/getGoodsBidAnnounceListNew.json";
-    public static final String BID_ANN_VIEW = "http://www.d2b.go.kr/pdb/bid/bidAnnounceView.do";
-    public static final String NEGO_ANN_VIEW = "http://www.d2b.go.kr/pdb/openNego/openNegoPlanView.do";
-    public static final String PROD_BID_RES = "http://www.d2b.go.kr/pdb/bid/getBidResultList.json";
-    public static final String PROD_NEGO_RES = "http://www.d2b.go.kr/pdb/openNego/openNegoResultView.do";
-    public static final String PROD_RES_VIEW = "http://www.d2b.go.kr/pdb/bid/bidResultView.do";
-    public static final String PROD_ORG_LIST = "http://www.d2b.go.kr/pdb/bid/getBidRecordList.json";
-    public static final String PROD_NEGO_ORG = "http://www.d2b.go.kr/pdb/openNego/getMnufResultList.json";
-    public static final String PROD_BID_PRICE = "http://www.d2b.go.kr/pdb/bid/multiReservePriceInfo.do";
-    public static final String PROD_NEGO_PRICE = "http://www.d2b.go.kr/pdb/openNego/openNegoMultiPricePop.do";
-    public static final String SERV_ANN_LIST = "http://www.d2b.go.kr/psb/bid/getServiceBidAnnounceListNew.json";
-    public static final String SERV_BID_RES = "http://www.d2b.go.kr/psb/bid/getBidResultList.json";
-    public static final String FACIL_ANN_LIST = "http://www.d2b.go.kr/peb/bid/getAnnounceList.json";
-    public static final String FACIL_NEGO_ANN = "http://www.d2b.go.kr/peb/openNego/openNegoPlanView.do";
-    public static final String FACIL_BID_ANN = "http://www.d2b.go.kr/peb/bid/announceView.do";
-    public static final String FACIL_BID_RES = "http://www.d2b.go.kr/peb/bid/getBidResultList.json";
-    public static final String FACIL_RES_VIEW = "http://www.d2b.go.kr/peb/bid/bidResultView.do";
-    public static final String FACIL_NEGO_RES = "http://www.d2b.go.kr/peb/openNego/openNegoResultView.do";
-    public static final String FACIL_ORG_LIST = "http://www.d2b.go.kr/peb/bid/getBidRecordList.json";
-    public static final String FACIL_NEGO_ORG = "http://www.d2b.go.kr/peb/openNego/getMnufResultList.json";
-    public static final String FACIL_BID_PRICE = "http://www.d2b.go.kr/peb/bid/multiPriceInfo.do";
-    public static final String FACIL_NEGO_PRICE = "http://www.d2b.go.kr/peb/openNego/openNegoMultiPricePop.do";
+    public static final String PROD_ANN_LIST = "https://www.d2b.go.kr/pdb/bid/getGoodsBidAnnounceListNew.json";
+    public static final String BID_ANN_VIEW = "https://www.d2b.go.kr/pdb/bid/bidAnnounceView.do";
+    public static final String NEGO_ANN_VIEW = "https://www.d2b.go.kr/pdb/openNego/openNegoPlanView.do";
+    public static final String PROD_BID_RES = "https://www.d2b.go.kr/pdb/bid/getBidResultList.json";
+    public static final String PROD_NEGO_RES = "https://www.d2b.go.kr/pdb/openNego/openNegoResultView.do";
+    public static final String PROD_RES_VIEW = "https://www.d2b.go.kr/pdb/bid/bidResultView.do";
+    public static final String PROD_ORG_LIST = "https://www.d2b.go.kr/pdb/bid/getBidRecordList.json";
+    public static final String PROD_NEGO_ORG = "https://www.d2b.go.kr/pdb/openNego/getMnufResultList.json";
+    public static final String PROD_BID_PRICE = "https://www.d2b.go.kr/pdb/bid/multiReservePriceInfo.do";
+    public static final String PROD_NEGO_PRICE = "https://www.d2b.go.kr/pdb/openNego/openNegoMultiPricePop.do";
+    public static final String SERV_ANN_LIST = "https://www.d2b.go.kr/psb/bid/getServiceBidAnnounceListNew.json";
+    public static final String SERV_BID_RES = "https://www.d2b.go.kr/psb/bid/getBidResultList.json";
+    public static final String FACIL_ANN_LIST = "https://www.d2b.go.kr/peb/bid/getAnnounceList.json";
+    public static final String FACIL_NEGO_ANN = "https://www.d2b.go.kr/peb/openNego/openNegoPlanView.do";
+    public static final String FACIL_BID_ANN = "https://www.d2b.go.kr/peb/bid/announceView.do";
+    public static final String FACIL_BID_RES = "https://www.d2b.go.kr/peb/bid/getBidResultList.json";
+    public static final String FACIL_RES_VIEW = "https://www.d2b.go.kr/peb/bid/bidResultView.do";
+    public static final String FACIL_NEGO_RES = "https://www.d2b.go.kr/peb/openNego/openNegoResultView.do";
+    public static final String FACIL_ORG_LIST = "https://www.d2b.go.kr/peb/bid/getBidRecordList.json";
+    public static final String FACIL_NEGO_ORG = "https://www.d2b.go.kr/peb/openNego/getMnufResultList.json";
+    public static final String FACIL_BID_PRICE = "https://www.d2b.go.kr/peb/bid/multiPriceInfo.do";
+    public static final String FACIL_NEGO_PRICE = "https://www.d2b.go.kr/peb/openNego/openNegoMultiPricePop.do";
 
     private class DapaEntry {
         HashMap<String, String> bidInfo;
@@ -77,7 +78,7 @@ public class NewDapaParser extends Parser {
     private ResultSet rs;
 
     private URL url;
-    private HttpURLConnection con;
+    private HttpsURLConnection con;
     private String startDate;
     private String endDate;
     private String option;
@@ -156,11 +157,12 @@ public class NewDapaParser extends Parser {
 
     public void openHttpConnection(String path) throws IOException {
         url = new URL(path);
-        con = (HttpURLConnection) url.openConnection();
+        con = (HttpsURLConnection) url.openConnection();
 
         con.setRequestMethod("POST");
         con.setRequestProperty("User-Agent", "Mozilla/5.0");
         con.setRequestProperty("Accept-Language", "ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4");
+        con.setRequestProperty("Origin", "https://www.d2b.go.kr");
     }
 
     public String getResponse(String param) throws IOException {
@@ -588,40 +590,44 @@ public class NewDapaParser extends Parser {
 
         Element infoDiv = doc.getElementsByClass("post").first();
         if (infoDiv != null) {
-            Element infoTable = infoDiv.getElementsByAttributeValue("summary", "상세테이블").first();
-            Elements headers = infoTable.getElementsByTag("th");
-            for (Element header : headers) {
-                switch (header.text()) {
-                    case "계약상대자결정방법":
-                        selectMethod = header.nextElementSibling().text();
-                        break;
-                    case "입찰방법":
-                        bidMethod = header.nextElementSibling().text();
-                        break;
-                    case "사정율(%)":
-                        range = header.nextElementSibling().text();
-                        String[] bounds = range.split(" ~ ");
-                        lowerBound = bounds[0];
-                        upperBound = bounds[1];
-                        break;
-                    case "하한(%)":
-                        lowerBound = header.nextElementSibling().text().replaceAll(" %", "");
-                        break;
-                    case "상한(%)":
-                        upperBound = header.nextElementSibling().text().replaceAll(" %", "");
-                        break;
-                    case "낙찰하한율(%)":
-                        rate = header.nextElementSibling().text().replaceAll(" %", "");
-                        break;
-                    case "사전심사":
-                    case "복수업체연구개발 대상구분":
-                        prelim = header.nextElementSibling().text();
-                        break;
-                    case "협상형태":
-                        negoMethod = header.nextElementSibling().text().trim().replaceAll("\\s+","");
-                        break;
-                    default:
-                        break;
+            System.out.println(infoDiv.html());
+            Elements infoTables = doc.getElementsByAttributeValue("summary", "상세테이블");
+            for (Element infoTable : infoTables) {
+                Elements headers = infoTable.getElementsByTag("th");
+                for (Element header : headers) {
+                    switch (header.text()) {
+                        case "낙찰자결정방법":
+                        case "계약상대자결정방법":
+                            selectMethod = header.nextElementSibling().text();
+                            break;
+                        case "입찰방법":
+                            bidMethod = header.nextElementSibling().text();
+                            break;
+                        case "사정율(%)":
+                            range = header.nextElementSibling().text();
+                            String[] bounds = range.split(" ~ ");
+                            lowerBound = bounds[0];
+                            upperBound = bounds[1];
+                            break;
+                        case "하한(%)":
+                            lowerBound = header.nextElementSibling().text().replaceAll(" %", "");
+                            break;
+                        case "상한(%)":
+                            upperBound = header.nextElementSibling().text().replaceAll(" %", "");
+                            break;
+                        case "낙찰하한율(%)":
+                            rate = header.nextElementSibling().text().replaceAll(" %", "");
+                            break;
+                        case "사전심사":
+                        case "복수업체연구개발 대상구분":
+                            prelim = header.nextElementSibling().text();
+                            break;
+                        case "협상형태":
+                            negoMethod = header.nextElementSibling().text().trim().replaceAll("\\s+","");
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         } else {
@@ -665,8 +671,13 @@ public class NewDapaParser extends Parser {
         openHttpConnection(path);
         StringBuilder paramBuilder = new StringBuilder();
         paramBuilder.append("dmst_itnb=");
-        if (entry.bidInfo.containsKey("dmstItnb") && entry.bidInfo.get("dmstItnb") != null) {
-            paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+        if (
+                entry.bidInfo.containsKey("dmstItnb") &&
+                entry.bidInfo.get("dmstItnb") != null
+        ) {
+            if (!entry.bidInfo.get("dmstItnb").equals("null")) {
+                paramBuilder.append(entry.bidInfo.get("dmstItnb"));
+            }
         } else {
             paramBuilder.append("***");
         }
@@ -777,11 +788,14 @@ public class NewDapaParser extends Parser {
                 rs = st.executeQuery(sql);
                 if (rs.first()) exists = rs.getBoolean(1);
 
-                if (!map.containsKey(where)) {
-                    map.put(where, 0);
+                // 중복 결과 확인용 프라이머리 키 카운트
+                // 포맷: 공고번호 차수 (int) 공사번호 항목번호 통합참조번호 연도 (int)
+                String primaryKey = String.format("%s %s %s %s %s %s %s %s", bidNum, bidVer, idenNum, itemNum, g2bNum, ordrYear, type, openDate);
+                if (!map.containsKey(primaryKey)) {
+                    map.put(primaryKey, 0);
                 }
 
-                map.put(where, map.get(where) + 1);
+                map.put(primaryKey, map.get(primaryKey) + 1);
 
                 if (exists) {
                     // Check the bid version and update level from the DB.
@@ -901,10 +915,33 @@ public class NewDapaParser extends Parser {
             bidEntries = getBidEntriesFromJsonArray(dataArray);
         }
 
+        // 사이트 중복 건 있으면 더미 데이터 삽입으로 건수 맞추기
         Iterator it = map.entrySet().iterator();
         StringBuilder sb = new StringBuilder();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry<String, Integer> pair = (Map.Entry)it.next();
+            boolean hasDup = false;
+            int count = pair.getValue();
+            while (count > 1) {
+                // 동일 primary key로 개찰결과가 한개 이상 있음
+                // 포맷: 공고번호 차수 (int) 공사번호 항목번호 통합참조번호 연도 (int) 분류 개찰일시
+                String primaryKey = pair.getKey();
+                String[] fields = primaryKey.split(" ");
+                fields[4] = fields[4] + count; // 통합참조번호 변경
+                String sql = String.format("SELECT EXISTS(SELECT 공고번호 FROM dapabidinfo WHERE 공고번호=\"%s\" AND 차수=%s AND 공사번호=\"%s\" AND 항목번호=\"%s\" AND 통합참조번호=\"%s\" AND 연도=%s);",
+                    fields[0], fields[1], fields[2], fields[3], fields[4], fields[5]
+                );
+                rs = st.executeQuery(sql);
+                if (rs.first()) hasDup = rs.getBoolean(1);
+                if (!hasDup) {
+                    sql = String.format("INSERT INTO dapabidinfo (공고번호, 차수, 공사번호, 항목번호, 통합참조번호, 연도, 결과, 분류, 개찰일시, 실제개찰일시, 입찰결과) VALUES (\"%s\", %s, \"%s\", \"%s\", \"%s\", %s, %s, \"%s\", \"%s\", \"%s\", \"%s\");",
+                        fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], "1", fields[6], fields[7], fields[7], "낙찰"
+                    );
+                    System.out.println(sql);
+                    st.executeUpdate(sql);
+                }
+                count--;
+            }
             sb.append("SELECT * FROM dapabidinfo ");
             sb.append(pair.getKey());
             sb.append(" # ");
@@ -917,7 +954,7 @@ public class NewDapaParser extends Parser {
 
         if (sb.length() > 0) {
             sb.delete(sb.length() - 7, sb.length());
-            System.out.println(sb.toString());
+            //System.out.println(sb.toString());
         }
     }
 

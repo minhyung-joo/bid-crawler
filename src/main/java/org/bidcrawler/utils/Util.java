@@ -22,7 +22,7 @@ public class Util {
     public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
     public static String[] EX_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "복수예가여부", "재입찰허용여부", "전자입찰여부", "공동수급가능여부", "현장설명실시여부", "공동수급의무여부" };
     public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
-    public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "철도시설공단" };
+    public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "국가철도공단" };
 
     public static String[] DAPA_TYPES = { "전체", "경쟁", "협상" };
 
@@ -152,7 +152,7 @@ public class Util {
         double baseValue = 0;
         if (site.equals("LH공사")) bPrice = rs.getString("기초금액");
         else if (site.equals("국방조달청")) bPrice = rs.getString("기초예비가격");
-        else if (site.equals("도로공사") || site.equals("철도시설공단")) bPrice = rs.getString("설계금액");
+        else if (site.equals("도로공사") || site.equals("국가철도공단")) bPrice = rs.getString("설계금액");
         else if (site.equals("한국마사회")) bPrice = rs.getString("예비가격기초금액");
         if (bPrice == null) bPrice = "";
         if (!bPrice.equals("") && !(bPrice.equals("0") || bPrice.equals("0.00"))) {
@@ -201,7 +201,7 @@ public class Util {
                 valid = false;
             }
         }
-        else if (site.equals("철도시설공단")) {
+        else if (site.equals("국가철도공단")) {
             largestLB = 2.00;
             largestUB = 2.70;
             smallestLB = -2.70;
@@ -227,6 +227,9 @@ public class Util {
         passCalendar.set(Calendar.SECOND, 0);
         passCalendar.set(Calendar.MILLISECOND, 0);
         Date passDate = passCalendar.getTime();
+        if (dateCheck == null) {
+            // System.out.println(rs.getString("공고번호"));
+        }
         if (dateCheck.after(passDate) || dateCheck.equals(passDate)) {
             valid = true;
         }
@@ -328,7 +331,7 @@ public class Util {
         if (!workType.equals("전체")) {
             sqlBuilder.append("분류=\"" + workType + "\" AND ");
         }
-        sqlBuilder.append("완료 > 0 ");
+        sqlBuilder.append("완료 > 0 AND 예정가격 IS NOT NULL AND 예정가격 > 0 ");
 
         // Add unopened notis
         sqlBuilder.append("UNION SELECT * FROM exbidinfo WHERE ");
@@ -338,7 +341,7 @@ public class Util {
         if (!workType.equals("전체")) {
             sqlBuilder.append("분류=\"" + workType + "\" AND ");
         }
-        sqlBuilder.append("개찰일시 >= \"" + today + "\" ORDER BY 개찰일시, 공고번호");
+        sqlBuilder.append("개찰일시 >= \"" + today + "\" AND 완료 IS NULL ORDER BY 개찰일시, 공고번호");
         return sqlBuilder.toString();
     }
 
@@ -479,6 +482,10 @@ public class Util {
             String lowerrate = cachedRowSet.getString("하한");
             if (lowerrate == null || lowerrate.equals("") || lowerrate.equals("-")) rate = "";
             else rate = lowerrate + " ~ " + cachedRowSet.getString("상한");
+        }
+
+        if (rate.equals("")) {
+            // System.out.println(bidno);
         }
 
         return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
@@ -698,7 +705,6 @@ public class Util {
 
     public static Object[] getExRow(CachedRowSet cachedRowSet, int index) throws SQLException {
         String bidno = cachedRowSet.getString("공고번호");
-        System.out.println(bidno);
         String date = cachedRowSet.getString("개찰일시");
         if (date.length() == 21) {
             date = date.substring(2, 4) + date.substring(5, 7) + date.substring(8, 10) + " " + date.substring(11, 16);

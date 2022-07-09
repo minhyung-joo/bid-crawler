@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,10 +34,10 @@ public class LetsParser extends Parser {
     java.sql.Statement st;
     ResultSet rs;
 
-    final static String ANN_LIST = "http://ebid.kra.co.kr/bid/notice/all/list.do";
-    final static String RES_LIST = "http://ebid.kra.co.kr/res/all/list.do";
-    final static String ANN_INFO = "http://ebid.kra.co.kr/bid/notice/all/view.do";
-    final static String RES_INFO = "http://ebid.kra.co.kr/res/all/view.do";
+    final static String ANN_LIST = "https://ebid.kra.co.kr/bid/notice/all/list.do";
+    final static String RES_LIST = "https://ebid.kra.co.kr/res/all/list.do";
+    final static String ANN_INFO = "https://ebid.kra.co.kr/bid/notice/all/view.do";
+    final static String RES_INFO = "https://ebid.kra.co.kr/res/all/view.do";
 
     URL url;
     HttpURLConnection con;
@@ -71,11 +72,15 @@ public class LetsParser extends Parser {
 
     public void run() {
         try {
-            curItem = 0;
-            setOption("공고");
-            if (!shutdown) getList();
-            setOption("결과");
-            if (!shutdown) getList();
+            if (op.equals("건수차이")) {
+                manageDifference(sd, ed);
+            } else {
+                curItem = 0;
+                setOption("공고");
+                if (!shutdown) getList();
+                setOption("결과");
+                if (!shutdown) getList();
+            }
 
             if (frame != null && !shutdown) {
                 frame.toggleButton();
@@ -584,7 +589,7 @@ public class LetsParser extends Parser {
     }
 
     public void parseResult(String bidno) throws IOException, SQLException {
-        String path = "http://ebid.kra.co.kr/res/result/bd_list_result_company_1.do?page=1&b_code="+bidno.substring(3)+"&select_method=11";
+        String path = "https://ebid.kra.co.kr/res/result/bd_list_result_company_1.do?page=1&b_code="+bidno.substring(3)+"&select_method=11";
 
         openConnection(path, "GET");
 
@@ -607,7 +612,7 @@ public class LetsParser extends Parser {
     }
 
     public void parseAnn(String bidno) throws IOException, SQLException {
-        String path = "http://ebid.kra.co.kr/bid/popup/bd_view_notice.do?b_code="+bidno.substring(3);
+        String path = "https://ebid.kra.co.kr/bid/popup/bd_view_notice.do?b_code="+bidno.substring(3);
 
         openConnection(path, "GET");
 
@@ -677,7 +682,7 @@ public class LetsParser extends Parser {
         Element pagingdiv = doc.getElementsByAttributeValue("class", "bid_paging").first();
         Element lastButton = pagingdiv.getElementsByAttributeValue("class", "btns last_page").first();
         if (lastButton != null) {
-            String lastpath = "http://ebid.kra.co.kr/res/all/";
+            String lastpath = "https://ebid.kra.co.kr/res/all/";
             lastpath += lastButton.attr("href");
             openConnection(lastpath, "GET");
 
@@ -709,6 +714,79 @@ public class LetsParser extends Parser {
         return curItem;
     }
 
-    public void manageDifference(String sm, String em) {
+    public void manageDifference(String sm, String em) throws SQLException, IOException {
+        if (db_con == null) {
+            // Set up SQL connection.
+            db_con = DriverManager.getConnection(
+                    "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                    Util.DB_ID,
+                    Util.DB_PW
+            );
+            st = db_con.createStatement();
+            rs = null;
+        }
+
+        ArrayList<String> bidNums = new ArrayList<String>();
+
+        String sql = "SELECT 공고번호 FROM letsrunbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
+        System.out.println(sql);
+        rs = st.executeQuery(sql);
+        while (rs.next()) {
+            System.out.println("rs");
+            bidNums.add(rs.getString("공고번호"));
+        }
+
+        int page = 1;
+        setOption("결과");
+        Document doc = getListPage(page);
+        Elements rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
+        int items = 0;
+
+        do {
+            if (rows.get(1).text().length() > 24) {
+                for (int i = 1; i < rows.size(); i++) {
+                    if (shutdown) {
+                        return;
+                    }
+
+                    Element row = rows.get(i);
+                    Elements data = row.getElementsByTag("td");
+                    String bidNum = data.get(1).text();
+                    System.out.println(bidNum);
+                    if (bidNums.indexOf(bidNum) != -1) {
+                        bidNums.remove(bidNum);
+                    }
+                }
+                page++;
+                boolean nextPage = false;
+                Element pagingdiv = doc.getElementsByAttributeValue("class", "bid_paging").first();
+                Elements pages = pagingdiv.getElementsByTag("a");
+                String pagestr = page + "";
+
+                for (int i = 0; i < pages.size(); i++) {
+                    String text = pages.get(i).text();
+                    System.out.println(text);
+                    if (text.equals(pagestr) || text.equals("다음 목록으로 이동")) {
+                        nextPage = true;
+                        break;
+                    }
+                }
+                if (nextPage) {
+                    doc = getListPage(page);
+                    rows = doc.getElementsByTag("table").get(1).getElementsByTag("tr");
+                    items = rows.size();
+                }
+                else {
+                    items = 0;
+                }
+            }
+        } while (items > 0);
+
+        for (int i = 0; i < bidNums.size(); i++) {
+            String bidNum = bidNums.get(i);
+            sql = "DELETE FROM letsrunbidinfo WHERE 공고번호=\"" + bidNum + "\";";
+            System.out.println(sql);
+            st.executeUpdate(sql);
+        }
     }
 }

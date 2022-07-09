@@ -255,6 +255,10 @@ public class ExParser extends Parser {
             String compType = data.get(5).text(); // 계약방법
             String openDate = data.get(6).text(); // 개찰일시
             String prog = data.get(7).text(); // 결과
+            if (wt.equals("공사")) {
+                prog = data.get(8).text();
+            }
+
             where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
 
             if (frame != null) frame.updateInfo(bidno, true);
@@ -282,7 +286,7 @@ public class ExParser extends Parser {
                     if (!dbResult.equals(prog) || !openDate.equals(dbDate.substring(0, 10))) {
                         dbDate = openDate;
                         String sql = "UPDATE exbidinfo SET 결과상태=\"" + prog + "\", 개찰일시=\"" + dbDate + "\" " + where;
-                        System.out.println(dbDate);
+                        System.out.println(sql);
                         st.executeUpdate(sql);
                     }
                     enter = false;
@@ -291,6 +295,7 @@ public class ExParser extends Parser {
             else {
                 String sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 개찰일시, 결과상태, 중복번호) VALUES (" +
                         "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"" + openDate + "\", \"" + prog + "\", \"1\");";
+                System.out.println(sql);
                 st.executeUpdate(sql);
             }
         }
@@ -305,6 +310,8 @@ public class ExParser extends Parser {
             if (it.equals("공고")) {
                 itempath += ExParser.ANN_INF;
                 itempath += link.attr("href");
+                Document itemdoc = Jsoup.parse(sendGetRequest(itempath));
+                parseInfo(itemdoc, itempath, where, 1);
             }
             else if (it.equals("결과")) {
                 itempath += ExParser.RES_INF;
@@ -423,6 +430,7 @@ public class ExParser extends Parser {
                             else {
                                 sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 공고상태, 중복번호) VALUES (" +
                                         "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"" + prog + "\", \"" + k + "\");";
+                                System.out.println(sql);
                                 st.executeUpdate(sql);
                             }
 
@@ -527,13 +535,13 @@ public class ExParser extends Parser {
                 else if (c.text().equals("발주 내역") || c.text().equals(dupCaption)) {
                     Element detailTable = c.parent();
                     Elements rows = detailTable.getElementsByTag("tr");
-
                     if (rows.size() > 2) {
                         int k = dup + 1;
                         if (rows.size() > k) {
                             boolean exists = false;
                             boolean enter = true;
                             String sql = "SELECT 공고번호, 지역, 계약방법, 개찰일시, 결과상태 FROM exbidinfo " + where;
+                            System.out.println(where);
                             rs = st.executeQuery(sql);
                             String bidno = "";
                             String area = "";
@@ -567,14 +575,27 @@ public class ExParser extends Parser {
                                 if (finished > 0) {
                                     if (!dbResult.equals(prog)) {
                                         sql = "UPDATE exbidinfo SET 결과상태=\"" + prog + "\" " + where;
+                                        System.out.println(sql);
                                         st.executeUpdate(sql);
                                     }
                                     enter = false;
                                 }
                             }
                             else {
-                                sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 개찰일시, 결과상태, 중복번호) VALUES (" +
-                                        "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"" + openDate + "\", \"" + prog + "\", \"" + k + "\");";
+                                sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, ";
+                                if (openDate != null) {
+                                    sql += "개찰일시, ";
+                                }
+
+                                sql += "결과상태, 중복번호) VALUES (" +
+                                        "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"";
+
+                                if (openDate != null) {
+                                    sql += openDate + "\", \"";
+                                }
+
+                                sql += prog + "\", \"" + k + "\");";
+                                System.out.println(sql);
                                 st.executeUpdate(sql);
                             }
 
@@ -617,6 +638,10 @@ public class ExParser extends Parser {
                 System.out.println(doc.html());
             }
 
+            // 복수예가 번호 오류 있을 시
+            // 임시 번호 + 예정 가격 계산용
+            int replaceIndex = 1;
+            double replacePrice = 0;
             if (buttonDiv != null) {
                 if (
                         buttonDiv.getElementsContainingText("입찰실시결과").size() > 0 ||
@@ -651,6 +676,16 @@ public class ExParser extends Parser {
                                     ind = ind.replaceAll("[^\\d]", "");
                                     price = price.replaceAll("[^\\d.]", "");
                                     sql = "UPDATE exbidinfo SET 복수"+ind+"="+price+" " + where;
+                                    if (ind.equals("0")) {
+                                        sql = "UPDATE exbidinfo SET 복수"+replaceIndex+"="+price+" " + where;
+                                        replaceIndex++;
+
+                                        if (replaceIndex <= 5) {
+                                            replacePrice += Double.parseDouble(price);
+                                        }
+                                    }
+
+                                    System.out.println(sql);
                                     st.executeUpdate(sql);
                                 }
                             }
@@ -666,8 +701,11 @@ public class ExParser extends Parser {
                     itempath = itempath.replace("state", "p_state");
 
                     Document compPage = Jsoup.parse(sendGetRequest(itempath));
-                    comp = compPage.getElementsByClass("totalCount_001").first().text();
-                    comp = comp.replaceAll("[^\\d]", "");
+                    if (!compPage.getElementsByClass("totalCount_001").isEmpty()) {
+                        comp = compPage.getElementsByClass("totalCount_001").first().text();
+                        comp = comp.replaceAll("[^\\d]", "");
+                    }
+
                     if (comp.equals("")) comp = "0";
                 }
             }
@@ -677,6 +715,8 @@ public class ExParser extends Parser {
 
             if (!expPrice.equals("0")) {
                 sql += "예정가격=" + expPrice + ", ";
+            } else if (replacePrice > 0) {
+                sql += "예정가격=" + (replacePrice / 4) + ", ";
             }
             if (!protoPrice.equals("0")) {
                 sql += "설계금액=" + protoPrice + ", ";
@@ -686,6 +726,7 @@ public class ExParser extends Parser {
             }
 
             sql += "참가수=" + comp + " " + where;
+            System.out.println(sql);
             st.executeUpdate(sql);
         }
     }

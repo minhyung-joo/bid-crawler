@@ -99,7 +99,7 @@ public class ExcelWriter {
         else if (site.equals("도로공사")) {
             exBidToExcel();
         }
-        else if (site.equals("철도시설공단")) {
+        else if (site.equals("국가철도공단")) {
             railnetBidToExcel();
         }
     }
@@ -135,7 +135,7 @@ public class ExcelWriter {
         Row columnNames = sheet.createRow(0);
         columnNames.createCell(cellIndex++).setCellValue("순번");
 
-        if (site.equals("도로공사") || site.equals("철도시설공단")) columnNames.createCell(cellIndex++).setCellValue("입찰공고번호");
+        if (site.equals("도로공사") || site.equals("국가철도공단")) columnNames.createCell(cellIndex++).setCellValue("입찰공고번호");
         else if (site.equals("국방조달청")) columnNames.createCell(cellIndex++).setCellValue("공고번호-차수");
         else if (site.equals("LH공사") || site.equals("한국마사회")) columnNames.createCell(cellIndex++).setCellValue("공고번호");
         else if (site.equals("철도공사")) columnNames.createCell(cellIndex++).setCellValue("공고번호(차수)");
@@ -146,13 +146,13 @@ public class ExcelWriter {
             columnNames.createCell(cellIndex++).setCellValue("개찰일시");
         }
 
-        if (site.equals("도로공사") || site.equals("철도시설공단")) columnNames.createCell(cellIndex++).setCellValue("업종제한사항");
+        if (site.equals("도로공사") || site.equals("국가철도공단")) columnNames.createCell(cellIndex++).setCellValue("업종제한사항");
         else if (site.equals("LH공사")) columnNames.createCell(cellIndex++).setCellValue("요구면허");
         else if (site.equals("국방조달청")) columnNames.createCell(cellIndex++).setCellValue("면허명칭[코드]");
         else if (site.equals("한국마사회")) columnNames.createCell(cellIndex++).setCellValue("입찰구분");
         else if (site.equals("철도공사")) columnNames.createCell(cellIndex++).setCellValue("공고구분");
 
-        if (site.equals("도로공사") || site.equals("철도시설공단")) columnNames.createCell(cellIndex++).setCellValue("설계금액");
+        if (site.equals("도로공사") || site.equals("국가철도공단")) columnNames.createCell(cellIndex++).setCellValue("설계금액");
         else columnNames.createCell(cellIndex++).setCellValue("기초금액");
         columnNames.createCell(cellIndex++).setCellValue("예정가격");
         columnNames.createCell(cellIndex++).setCellValue("투찰금액");
@@ -278,7 +278,7 @@ public class ExcelWriter {
             columnNames.createCell(cellIndex++).setCellValue("");
             columnNames.createCell(cellIndex++).setCellValue("사정률");
         }
-        else if (site.equals("철도시설공단")) {
+        else if (site.equals("국가철도공단")) {
             columnNames.createCell(cellIndex++).setCellValue("개찰일시");
             columnNames.createCell(cellIndex++).setCellValue("발주기관");
             columnNames.createCell(cellIndex++).setCellValue("수요기관");
@@ -313,7 +313,7 @@ public class ExcelWriter {
             case "한국마사회":
                 nameLetsrunFile();
                 break;
-            case "철도시설공단":
+            case "국가철도공단":
                 nameRailnetFile();
                 break;
         }

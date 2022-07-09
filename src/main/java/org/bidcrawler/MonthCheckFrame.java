@@ -139,7 +139,7 @@ public class MonthCheckFrame extends CheckFrame {
                                 parser = new NewLHParser("", "", "", null, pointer);
                                 sql = "SELECT COUNT(*) FROM lhbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
                             }
-                            else if (site.equals("철도시설공단")) {
+                            else if (site.equals("국가철도공단")) {
                                 parser = new NewRailnetParser("", "", "", null, pointer);
                                 sql = "SELECT COUNT(*) FROM railnetbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
                             }
