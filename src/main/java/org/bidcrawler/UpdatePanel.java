@@ -32,6 +32,7 @@ public class UpdatePanel extends JPanel {
         initializePanel("한국마사회");
         initializePanel("도로공사");
         initializePanel("국가철도공단");
+        initializePanel("한국전력");
     }
 
     public void initializePanel(String site) throws IOException {
@@ -41,6 +42,7 @@ public class UpdatePanel extends JPanel {
         else if (site.equals("도로공사")) path = "/org/bidcrawler/logos/ex.PNG";
         else if (site.equals("한국마사회")) path = "/org/bidcrawler/logos/letsrun.PNG";
         else if (site.equals("국가철도공단")) path = "/org/bidcrawler/logos/railnet.png";
+        else if (site.equals("한국전력")) path = "/org/bidcrawler/logos/railnet.png";
 
         InputStream stream = UpdatePanel.class.getResourceAsStream(path);
         BufferedImage logo = ImageIO.read(stream);

@@ -188,10 +188,13 @@ public class GetFrame extends JFrame {
                             parser = new NewLHParser(sd, ed, "", frame, null);
                         }
                         else if (site.equals("도로공사")) {
-                            parser = new ExParser(sd, ed, "", frame, null);
+                            parser = new ExParserV2(sd, ed, "", frame, null);
                         }
                         else if (site.equals("국가철도공단")) {
                             parser = new NewRailnetParser(sd, ed, "", frame, null);
+                        }
+                        else if (site.equals("한국전력")) {
+                            parser = new KepcoParser(sd, ed, "", frame, null);
                         }
 
                         totalCount = "" + parser.getTotal();
