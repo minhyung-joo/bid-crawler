@@ -188,7 +188,7 @@ public class GetFrame extends JFrame {
                             parser = new NewLHParser(sd, ed, "", frame, null);
                         }
                         else if (site.equals("도로공사")) {
-                            parser = new ExParserV2(sd, ed, "", frame, null);
+                            parser = new DoroParser(sd, ed, "", frame, null);
                         }
                         else if (site.equals("국가철도공단")) {
                             parser = new NewRailnetParser(sd, ed, "", frame, null);

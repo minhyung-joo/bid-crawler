@@ -106,7 +106,7 @@ public class ExcelWriter {
 
     public void connectDB() throws ClassNotFoundException, SQLException {
         con = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
                 Util.DB_ID,
                 Util.DB_PW
         );

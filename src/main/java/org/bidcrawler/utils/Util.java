@@ -220,7 +220,7 @@ public class Util {
             if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
         }
 
-        Date dateCheck = rs.getDate("개찰일시");
+        Date dateCheck = rs.getTimestamp("개찰일시");
         Calendar passCalendar = Calendar.getInstance();
         passCalendar.set(Calendar.HOUR_OF_DAY, 0);
         passCalendar.set(Calendar.MINUTE, 0);

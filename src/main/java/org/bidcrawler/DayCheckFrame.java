@@ -107,7 +107,7 @@ public class DayCheckFrame extends CheckFrame {
                     try
                     {
                         timeFrames = queryByDay(startDate, endDate);
-                        con = DriverManager.getConnection("jdbc:mysql://localhost/bid_db_2?useUnicode=true&characterEncoding=euckr", Util.DB_ID, Util.DB_PW);
+                        con = DriverManager.getConnection("jdbc:mysql://localhost/bid_db_2?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", Util.DB_ID, Util.DB_PW);
                         st = con.createStatement();
                         rs = null;
 

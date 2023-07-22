@@ -278,7 +278,7 @@ public class DataPanel extends JPanel {
                     String org = orgInput.getText();
 
                     con = DriverManager.getConnection(
-                            "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                            "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
                             Util.DB_ID,
                             Util.DB_PW
                     );
