@@ -26,6 +26,7 @@ import javax.net.ssl.HttpsURLConnection;
 class DoroParser extends Parser {
     public static final String ANN_LIST = "https://ebid.ex.co.kr/ui/sp/expro/bidnoti/findListBidNoti.do";
     public static final String ANN_DETAIL = "https://ebid.ex.co.kr/ui/sp/expro/bidnoti/findInfoNotiDetail.do";
+    public static final String ANN_SHARED = "https://ebid.ex.co.kr/ui/sp/expro/shared/findInfoBidShared.do";
     public static final String RES_LIST = "https://ebid.ex.co.kr/ui/sp/expro/bidresult/findListResult.do";
     public static final String RES_DETAIL = "https://ebid.ex.co.kr/ui/sp/expro/bidresult/findInfoResultDetail.do";
     public static final String PRICE_DETAIL = "https://ebid.ex.co.kr/ui/sp/expro/shared/findBidResultDetail.do";
@@ -90,6 +91,21 @@ class DoroParser extends Parser {
 
     @Override
     public int getTotal() throws IOException, ClassNotFoundException, SQLException {
+        getCookie();
+        JSONObject paramMap = new JSONObject();
+        paramMap.put("from_date", this.sd);
+        paramMap.put("to_date", this.ed);
+        paramMap.put("status", "Z");
+        paramMap.put("arr_status", new String[] { "MY","QQ","QN","UA","UB","UP","UR","OO" });
+        String[] options = new String[]{"CT", "MT", "SV"};
+        for (String o : options) {
+            paramMap.put("noti_cls", o);
+            String path = DoroParser.RES_LIST;
+            openHttpConnection(path, "POST");
+            JSONArray response = new JSONArray(getResponse(paramMap.toString()));
+            totalItems += response.length();
+        }
+
         return totalItems;
     }
 
@@ -211,9 +227,11 @@ class DoroParser extends Parser {
             paramMap.put("noti_cls", "SV");
         }
         paramMap.put("page", "noti");
+        int count = 0;
         JSONArray response = new JSONArray(getResponse(paramMap.toString()));
         for (Object obj : response) {
             parseNotiListRow((JSONObject)obj);
+            count++;
         }
     }
 
@@ -241,6 +259,7 @@ class DoroParser extends Parser {
         }
 
         System.out.println(areaCode);
+        System.out.println(area);
 
         return area;
     }
@@ -297,15 +316,15 @@ class DoroParser extends Parser {
         String mustCommon = detailObj.getString("unsc_dty_yn"); // 공동수급의무여부
         String openDate = detailObj.getString("open_dt"); // 개찰일시
         openDate = parseDate(openDate);
-        int protoPrice = detailObj.getInt("dsgng_amt"); // 설계금액
-        int aPrice = 0; // A값
+        long protoPrice = detailObj.getLong("dsgng_amt"); // 설계금액
+        long aPrice = 0; // A값
         if (detailObj.has("aval_tot_amt") && !detailObj.isNull("aval_tot_amt")) {
-            aPrice = detailObj.getInt("aval_tot_amt");
+            aPrice = detailObj.getLong("aval_tot_amt");
         }
 
-        int purtCost = 0; // 순공사원가
+        long purtCost = 0; // 순공사원가
         if (detailObj.has("purt_const_cst") && !detailObj.isNull("purt_const_cst")) {
-            purtCost = detailObj.getInt("purt_const_cst");
+            purtCost = detailObj.getLong("purt_const_cst");
         }
 
         String sql = "UPDATE exbidinfo SET 공고=1, " +
@@ -370,6 +389,49 @@ class DoroParser extends Parser {
         }
     }
 
+    private void parseAnnShared(JSONObject annData, String where) throws IOException, SQLException {
+        String path = DoroParser.ANN_SHARED;
+        openHttpConnection(path, "POST");
+
+        JSONObject paramMap = new JSONObject();
+        paramMap.put("noti_no", annData.get("noti_no"));
+        paramMap.put("noti_cls", annData.get("noti_cls"));
+        paramMap.put("noti_id", annData.get("noti_id"));
+        paramMap.put("noti_cont_id", annData.get("noti_cont_id"));
+        paramMap.put("bid_no", annData.get("bid_no").toString());
+        paramMap.put("bid_rev", annData.get("bid_rev").toString());
+        paramMap.put("page", "noti");
+        JSONObject response = new JSONObject(getResponse(paramMap.toString()));
+        JSONObject info = response.getJSONArray("findListBid").getJSONObject(0);
+        String bidTerms = info.getString("bid_terms"); // 입찰
+        String stlTerms = info.getString("stl_terms"); // 심사
+
+        JSONObject contactInfo = response.getJSONObject("findInfoNotiDetail");
+        String bidContact = contactInfo.getString("crhd_reg_nm_no");
+        if (bidContact.contains("(")) {
+            bidContact = bidContact.split("\\(")[1];
+            bidContact = bidContact.substring(0, bidContact.length() - 1);
+        } else {
+            bidContact = "";
+        }
+
+        String contractContact = contactInfo.getString("bdei_reg_nm_no");
+        if (contractContact.contains("(")) {
+            contractContact = contractContact.split("\\(")[1];
+            contractContact = contractContact.substring(0, contractContact.length() - 1);
+        } else {
+            contractContact = "";
+        }
+
+        String sql = "UPDATE exbidinfo SET " +
+                "계약방법2=\"" + bidTerms + "\", " +
+                "계약방법3=\"" + stlTerms + "\", " +
+                "과업관련문의=\"" + bidContact + "\", " +
+                "계약관련문의=\"" + contractContact + "\" " + where;
+        System.out.println(sql);
+        st.executeUpdate(sql);
+    }
+
     private void parseAnnouncementDetail(JSONObject annData, String where) throws IOException, SQLException {
         String path = DoroParser.ANN_DETAIL;
         openHttpConnection(path, "POST");
@@ -381,10 +443,10 @@ class DoroParser extends Parser {
         paramMap.put("noti_cont_id", annData.get("noti_cont_id"));
         paramMap.put("bid_no", annData.get("bid_no").toString());
         paramMap.put("bid_rev", annData.get("bid_rev").toString());
-        //paramMap.put("bid_nm", annData.get("noti_nm"));
         paramMap.put("page", "noti");
         JSONObject response = new JSONObject(getResponse(paramMap.toString()));
-        //System.out.println(response.toString());
+
+        parseAnnShared(annData, where);
 
         JSONObject detailObj = response.getJSONObject("detailData");
         parseDetailData(detailObj, where);
@@ -392,7 +454,7 @@ class DoroParser extends Parser {
         JSONArray priceArray = response.getJSONArray("estmList");
         for (int i = 0; i < priceArray.length(); i++) {
             JSONObject priceObj = priceArray.getJSONObject(i);
-            int price = priceObj.getInt("dec_amt"); // 예가
+            long price = priceObj.getLong("dec_amt"); // 예가
             String priceSql = "UPDATE exbidinfo SET 복수"+(i+1)+"="+price+" " + where;
             System.out.println(priceSql);
             st.executeUpdate(priceSql);
@@ -405,7 +467,6 @@ class DoroParser extends Parser {
         int page = 1;
 
         this.wt = option;
-        // todo: COPY HEADER AND JSON FIELDS EXACTLY
         JSONObject paramMap = new JSONObject();
         paramMap.put("from_date", this.sd);
         paramMap.put("to_date", this.ed);
@@ -420,12 +481,13 @@ class DoroParser extends Parser {
         }
 
         JSONArray response = new JSONArray(getResponse(paramMap.toString()));
+        totalItems += response.length();
         int count = 0;
         for (Object obj : response) {
+            curItem++;
             parseResultRow((JSONObject)obj);
             count++;
-
-            if (count > 1) {
+            if (count > 0) {
                 return;
             }
         }
@@ -447,6 +509,11 @@ class DoroParser extends Parser {
         String where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
         String openDate = row.get("open_time").toString(); // 개찰일시
         openDate = parseDate(openDate);
+
+        if (frame != null) frame.updateInfo(bidno, true);
+        if (checkFrame != null) {
+            checkFrame.updateProgress(threadIndex);
+        }
 
          // Check if the 공고번호 already exists in the DB.
          rs = st.executeQuery("SELECT EXISTS(SELECT 공고번호 FROM exbidinfo " + where + ")");
@@ -507,9 +574,9 @@ class DoroParser extends Parser {
 
         String annDate = detailObj.getString("noti_date"); // 공고일자
         annDate = parseDate(annDate);
-        int protoPrice = 0; // 설계금액
+        long protoPrice = 0; // 설계금액
         if (detailObj.has("budget_amt") && !detailObj.isNull("budget_amt")) {
-            protoPrice = detailObj.getInt("budget_amt");
+            protoPrice = detailObj.getLong("budget_amt");
         }
 
         parsePriceDetail(detailObj, where);
@@ -538,7 +605,7 @@ class DoroParser extends Parser {
         try {
             JSONObject response = new JSONObject(getResponse(resDetail.toString()));
             JSONObject bidEntry = response.getJSONArray("findListBidVd").getJSONObject(0);
-            int bidPrice = bidEntry.getInt("dec_amt");
+            long bidPrice = bidEntry.getLong("dec_amt");
             int comp = response.getJSONArray("findListBidVd").length();
             StringBuilder sb = new StringBuilder();
             sb.append("UPDATE exbidinfo SET ");
@@ -566,7 +633,7 @@ class DoroParser extends Parser {
         try {
             JSONObject response = new JSONObject(getResponse(resDetail.toString()));
             JSONObject bidEntry = response.getJSONArray("resultList").getJSONObject(0);
-            int bidPrice = bidEntry.getInt("dec_amt");
+            long bidPrice = bidEntry.getLong("dec_amt");
             String priceList = response.getJSONObject("resultExe").getString("final_eamt");
             int bidCount = response.getJSONObject("resultExe").getInt("bid_count");
             //System.out.println(priceList);
@@ -598,11 +665,11 @@ class DoroParser extends Parser {
     public void run() {
         try {
             getCookie();
-            //parseAnnouncementData("공사");
-            parseResultData("공사");
-            //parseAnnouncementData("용역");
+            parseAnnouncementData("공사");
+            //parseResultData("공사");
+            parseAnnouncementData("용역");
             //parseResultData("용역");
-            //parseAnnouncementData("물품");
+            parseAnnouncementData("물품");
             //parseResultData("물품");
 
             if (frame != null && !shutdown) {
