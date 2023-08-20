@@ -309,11 +309,17 @@ class DoroParser extends Parser {
         String annDate = detailObj.getString("noti_date"); // 공고일자
         annDate = parseDate(annDate);
         String hasDup = detailObj.getString("plrl_prc_yn"); // 복수예가적용여부
+        hasDup = hasDup.equals("Y") ? "복수" : "단수";
         String hasRebid = detailObj.getString("re_bid_yn"); // 재입찰허용여부
+        hasRebid = hasRebid.equals("Y") ? "예" : "아니오";
         String elecBid = detailObj.getString("elec_bid_yn"); // 전자입찰여부
+        elecBid = elecBid.equals("Y") ? "예" : "아니오";
         String hasCommon = detailObj.getString("unsc_allow_yn"); // 공동수급가능여부
+        hasCommon = hasCommon.equals("Y") ? "예" : "아니오";
         String fieldTour = detailObj.getString("field_desc_yn"); // 현장설명실시여부
+        fieldTour = fieldTour.equals("Y") ? "예" : "아니오";
         String mustCommon = detailObj.getString("unsc_dty_yn"); // 공동수급의무여부
+        mustCommon = mustCommon.equals("Y") ? "예" : "아니오";
         String openDate = detailObj.getString("open_dt"); // 개찰일시
         openDate = parseDate(openDate);
         long protoPrice = detailObj.getLong("dsgng_amt"); // 설계금액
@@ -359,6 +365,8 @@ class DoroParser extends Parser {
         String prog = row.get("prog_sts").toString(); // 공고상태
         if (prog.equals("EY")) {
             prog = "공고중";
+        } else if (prog.equals("FY")) {
+            prog = "정정공고중";
         }
 
         where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
@@ -389,6 +397,36 @@ class DoroParser extends Parser {
         }
     }
 
+    private String parseBidTerms(String code) {
+        String bidTerms = "";
+        if (code.equals("TOT")) {
+            bidTerms = "총액입찰";
+        } else if (code.equals("DET")) {
+            bidTerms = "내역입찰";
+        }
+
+        return bidTerms;
+    }
+
+    private String parseStlTerms(String code) {
+        String stlTerms = "";
+        if (code.equals("STR")) {
+            stlTerms = "소액전자입찰";
+        } else if (code.equals("STE")) {
+            stlTerms = "적격심사";
+        } else if (code.equals("STK")) {
+            stlTerms = "간이형종합심사";
+        } else if (code.equals("STH")) {
+            stlTerms = "협상";
+        } else if (code.equals("STD")) {
+            stlTerms = "건설폐기물적격심사";
+        } else if (code.equals("STJ")) {
+            stlTerms = "기술용역 적격심사";
+        }
+
+        return stlTerms;
+    }
+
     private void parseAnnShared(JSONObject annData, String where) throws IOException, SQLException {
         String path = DoroParser.ANN_SHARED;
         openHttpConnection(path, "POST");
@@ -404,7 +442,9 @@ class DoroParser extends Parser {
         JSONObject response = new JSONObject(getResponse(paramMap.toString()));
         JSONObject info = response.getJSONArray("findListBid").getJSONObject(0);
         String bidTerms = info.getString("bid_terms"); // 입찰
+        bidTerms = parseBidTerms(bidTerms);
         String stlTerms = info.getString("stl_terms"); // 심사
+        stlTerms = parseStlTerms(stlTerms);
 
         JSONObject contactInfo = response.getJSONObject("findInfoNotiDetail");
         String bidContact = contactInfo.getString("crhd_reg_nm_no");
@@ -487,9 +527,6 @@ class DoroParser extends Parser {
             curItem++;
             parseResultRow((JSONObject)obj);
             count++;
-            if (count > 0) {
-                return;
-            }
         }
     }
 
@@ -498,6 +535,7 @@ class DoroParser extends Parser {
         boolean exists = false;
         String bidno = row.get("noti_no").toString(); // 공고번호
         String area = row.get("area").toString(); // 지역
+        area = parseArea(area);
         String compType = row.get("cpt_terms").toString(); // 계약방법
         if (compType.equals("CTH")) {
             compType = "제한경쟁";
@@ -571,6 +609,7 @@ class DoroParser extends Parser {
 
         JSONObject detailObj = response.getJSONObject("detailData");
         parseDetailData(detailObj, where);
+        parseAnnShared(resData, where);
 
         String annDate = detailObj.getString("noti_date"); // 공고일자
         annDate = parseDate(annDate);
@@ -666,11 +705,11 @@ class DoroParser extends Parser {
         try {
             getCookie();
             parseAnnouncementData("공사");
-            //parseResultData("공사");
+            parseResultData("공사");
             parseAnnouncementData("용역");
-            //parseResultData("용역");
+            parseResultData("용역");
             parseAnnouncementData("물품");
-            //parseResultData("물품");
+            parseResultData("물품");
 
             if (frame != null && !shutdown) {
                 frame.toggleButton();
