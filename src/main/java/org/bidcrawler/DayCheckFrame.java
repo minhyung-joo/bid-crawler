@@ -128,7 +128,7 @@ public class DayCheckFrame extends CheckFrame {
                                 sql = "SELECT COUNT(*) FROM letsrunbidinfo WHERE 개찰일시 BETWEEN \"" + sday + " 00:00:00\" AND \"" + sday + " 23:59:59\" AND 완료=1;";
                             }
                             else if (site.equals("도로공사")) {
-                                parser = new ExParser("", "", "", null, pointer);
+                                parser = new DoroParser("", "", "", null, pointer);
                                 sql = "SELECT COUNT(DISTINCT 공고번호) FROM exbidinfo WHERE 개찰일시 BETWEEN \"" + sday + " 00:00:00\" AND \"" + sday + " 23:59:59\" AND 중복번호=1 AND 완료=1;";
                             }
                             else if (site.equals("LH공사")) {

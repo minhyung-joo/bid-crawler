@@ -105,7 +105,7 @@ public class MonthCheckFrame extends CheckFrame {
                     try
                     {
                         timeFrames = queryByMonth(startDate, endDate);
-                        con = DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8", Util.DB_ID, Util.DB_PW);
+                        con = DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", Util.DB_ID, Util.DB_PW);
                         st = con.createStatement();
                         rs = null;
 
@@ -132,7 +132,7 @@ public class MonthCheckFrame extends CheckFrame {
                                 sql = "SELECT COUNT(*) FROM letsrunbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 완료=1;";
                             }
                             else if (site.equals("도로공사")) {
-                                parser = new ExParser("", "", "", null, pointer);
+                                parser = new DoroParser("", "", "", null, pointer);
                                 sql = "SELECT COUNT(DISTINCT 공고번호) FROM exbidinfo WHERE 개찰일시 BETWEEN \"" + sm + " 00:00:00\" AND \"" + em + " 23:59:59\" AND 중복번호=1 AND 완료=1;";
                             }
                             else if (site.equals("LH공사")) {

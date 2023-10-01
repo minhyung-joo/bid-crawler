@@ -107,12 +107,14 @@ public class DataPanel extends JPanel {
     public void adjustColumns() {
         data.setRowHeight(20);
         final TableColumnModel columnModel = data.getColumnModel();
+        String site = siteDrop.getSelectedItem().toString();
+
         for (int i = 0; i < data.getColumnCount(); i++) {
             int width = 50;
             for (int j = 0; j < data.getRowCount(); j++) {
                 TableCellRenderer renderer = data.getCellRenderer(j, i);
                 Component comp = data.prepareRenderer(renderer, j, i);
-                width = Math.max(comp.getPreferredSize().width + 1, width);
+                width = Math.max(comp.getPreferredSize().width + 5, width);
             }
             DefaultTableCellRenderer leftRender = new DefaultTableCellRenderer();
             leftRender.setHorizontalAlignment(SwingConstants.LEFT);
@@ -120,11 +122,13 @@ public class DataPanel extends JPanel {
                 columnModel.getColumn(i).setCellRenderer(leftRender);
             }
 
-            if (i == 3) width = 50;
-            if (i > 14 && i < 17) {
-                if (width > 100) width = 100;
+            if (!site.equals("도로공사")) {
+                if (i == 3) width = 50;
+                if (i > 14 && i < 17) {
+                    if (width > 100) width = 100;
+                }
+                if (width > 180) width = 180;
             }
-            if (width > 180) width = 180;
 
             columnModel.getColumn(i).setPreferredWidth(width);
         }
@@ -278,7 +282,7 @@ public class DataPanel extends JPanel {
                     String org = orgInput.getText();
 
                     con = DriverManager.getConnection(
-                            "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+                            Util.DB_URL,
                             Util.DB_ID,
                             Util.DB_PW
                     );

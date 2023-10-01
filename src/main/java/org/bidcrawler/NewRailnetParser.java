@@ -59,7 +59,7 @@ public class NewRailnetParser extends Parser
         curItem = 0;
 
         db_con = java.sql.DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", Util.DB_ID, Util.DB_PW);
-        st = db_con.createStatement();
+        st = db_con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         rs = null;
     }
 
@@ -653,18 +653,24 @@ public class NewRailnetParser extends Parser
                 int currentItem = 1;
                 Element entryDiv = doc.getElementsByTag("tbody").first();
                 Elements itemRows = entryDiv.getElementsByTag("tr");
-                while (currentItem <= totalItems) {
+                boolean broken = false;
+                while (currentItem <= totalItems && !broken) {
                     for (Element itemRow : itemRows) {
                         String link = itemRow.attr("onclick");
                         String[] linkData = link.split("'");
-                        String ggChasu = linkData[7];
-                        Elements itemData = itemRow.getElementsByTag("td");
-                        String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
-                        rowMap.put(bidNum + ggChasu, true);
-                        currentItem++;
+                        if (linkData.length >= 8) {
+                            String ggChasu = linkData[7];
+                            Elements itemData = itemRow.getElementsByTag("td");
+                            String bidNum = Util.removeWhitespace(((Element)itemData.get(2)).text());
+                            rowMap.put(bidNum + ggChasu, true);
+                            currentItem++;
+                        } else {
+                            broken = true;
+                            break;
+                        }
                     }
 
-                    if ((currentItem % 10 == 1) && (currentItem <= totalItems)) {
+                    if ((currentItem % 10 == 1) && (currentItem <= totalItems) && !broken) {
                         page++;
                         path = RES_LIST;
                         urlParameters.clear();

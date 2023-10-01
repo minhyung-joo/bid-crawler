@@ -69,7 +69,7 @@ class DoroParser extends Parser {
 
         // Set up SQL connection.
         db_con = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+                Util.DB_URL,
                 Util.DB_ID,
                 Util.DB_PW
         );
@@ -208,6 +208,7 @@ class DoroParser extends Parser {
     }
 
     private void parseAnnouncementData(String option) throws IOException, SQLException {
+        this.option = option;
         String path = DoroParser.ANN_LIST;
         openHttpConnection(path, "POST");
         int page = 1;
@@ -305,6 +306,24 @@ class DoroParser extends Parser {
         return sb.toString();
     }
 
+    private String parseLicense2(String code) {
+        if (code.equals("0036")) {
+            return "정보통신공사업";
+        } else if (code.equals("0037")) {
+            return "전기공사업";
+        } else if (code.equals("4992")) {
+            return "도장,습식,방수,석공사업";
+        } else if (code.equals("0001")) {
+            return "토목공사업";
+        } else if (code.equals("0039")) {
+            return "일반소방시설공사업(전기)";
+        } else if (code.equals("0002")) {
+            return "건축공사업";
+        }
+
+        return "";
+    }
+
     private void parseDetailData(JSONObject detailObj, String where) throws SQLException {
         String annDate = detailObj.getString("noti_date"); // 공고일자
         annDate = parseDate(annDate);
@@ -368,6 +387,24 @@ class DoroParser extends Parser {
         } else if (prog.equals("FY")) {
             prog = "정정공고중";
         }
+        String license1 = row.isNull("bid_shpr1") ? "" : row.getString("bid_shpr1");
+        String license2 = row.isNull("bid_shpr2") ? "" : row.getString("bid_shpr2");
+        if (option.equals("공사")) {
+            if (license1.equals("1000")) {
+                license1 = "종합건설업";
+            } else if (license1.equals("2000")) {
+                license1 = "전문건설업";
+            } else if (license1.equals("3000")) {
+                license1 = "기타공사업";
+            }
+
+            license2 = parseLicense2(license2);
+        }
+        if (option.equals("물품")) {
+            license1 = row.isNull("lmtcpt_apply_bas_cd") ? "" : row.getString("lmtcpt_apply_bas_cd");
+        }
+
+        String license = (license1 + " " + license2).trim();
 
         where = "WHERE 공고번호=\"" + bidno + "\" AND 중복번호=\"1\"";
 
@@ -387,8 +424,8 @@ class DoroParser extends Parser {
            if (finished > 0) enter = false;
          }
          else {
-           sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 공고상태, 중복번호) VALUES (" +
-                   "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"" + prog + "\", \"1\");";
+           sql = "INSERT INTO exbidinfo (공고번호, 분류, 지역, 계약방법, 공고상태, 업종제한사항, 중복번호) VALUES (" +
+                   "\""+bidno+"\", \"" + wt + "\", \"" + area + "\", \"" + compType + "\", \"" + prog + "\", \"" + license + "\", \"1\");";
            st.executeUpdate(sql);
          }
 
@@ -614,8 +651,8 @@ class DoroParser extends Parser {
         String annDate = detailObj.getString("noti_date"); // 공고일자
         annDate = parseDate(annDate);
         long protoPrice = 0; // 설계금액
-        if (detailObj.has("budget_amt") && !detailObj.isNull("budget_amt")) {
-            protoPrice = detailObj.getLong("budget_amt");
+        if (detailObj.has("dsgng_amt") && !detailObj.isNull("dsgng_amt")) {
+            protoPrice = detailObj.getLong("dsgng_amt");
         }
 
         parsePriceDetail(detailObj, where);

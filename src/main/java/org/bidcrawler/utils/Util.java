@@ -20,7 +20,7 @@ public class Util {
     public static String[] DAPA_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "기초예가적용여부", "사전심사", "낙찰자결정방법", "입찰서제출마감일시", "낙찰하한율", "사정률" };
     public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법", "재입찰", "선택가격1", "선택가격2", "선택가격3", "선택가격4", "기존예정가격", "분류", "업무" };
     public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
-    public static String[] EX_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "복수예가여부", "재입찰허용여부", "전자입찰여부", "공동수급가능여부", "현장설명실시여부", "공동수급의무여부" };
+    public static String[] EX_COLUMNS = { "", "입찰공고번호", "개찰일시", "업종제한사항", "설계금액", "예정가격", "투찰금액", "순공사원가", "A값", "추첨가격1", "추첨가격15", "참가수", "공고일자", "계약방법1", "계약방법2", "계약방법3", "업력", "발주기관" };
     public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
     public static String[] SITES = { "국방조달청", "LH공사", "도로공사", "한국마사회", "국가철도공단" };
 
@@ -38,6 +38,8 @@ public class Util {
     public static String SCHEMA;
     public static String BASE_PATH;
 
+    public static String DB_URL;
+
     public static void initialize() {
         Properties properties = new Properties();
         try {
@@ -48,6 +50,7 @@ public class Util {
             DB_PW = properties.getProperty("DB_PW");
             SCHEMA = properties.getProperty("SCHEMA");
             BASE_PATH = properties.getProperty("BASE_PATH");
+            DB_URL = "jdbc:mysql://localhost/" + SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Seoul";
 
             in.close();
         } catch (IOException e) {
@@ -210,7 +213,7 @@ public class Util {
             if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
             if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
         }
-        else if (site.equals("도로공사") || site.equals("한국마사회")) {
+        else if (site.equals("한국마사회")) {
             largestLB = 2.50;
             largestUB = 3.001;
             smallestLB = -3.00;
@@ -218,6 +221,8 @@ public class Util {
 
             if (largestRatio >= largestUB || largestRatio <= largestLB) valid = false;
             if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) valid = false;
+        } else if (site.equals("도로공사")) {
+
         }
 
         Date dateCheck = rs.getTimestamp("개찰일시");
@@ -331,7 +336,7 @@ public class Util {
         if (!workType.equals("전체")) {
             sqlBuilder.append("분류=\"" + workType + "\" AND ");
         }
-        sqlBuilder.append("완료 > 0 AND 예정가격 IS NOT NULL AND 예정가격 > 0 ");
+        sqlBuilder.append("완료 > 0 AND 예정가격 IS NOT NULL AND 예정가격 > 0 AND 공고일자 >= \"2023-07-24\" ");
 
         // Add unopened notis
         sqlBuilder.append("UNION SELECT * FROM exbidinfo WHERE ");
@@ -736,6 +741,14 @@ public class Util {
         }
         else tPrice = "-";
 
+        String purePrice = cachedRowSet.getString("순공사원가");
+        if (purePrice != null && !purePrice.equals("") && !(purePrice.equals("0") || purePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(purePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            purePrice = formatter.format(amount);
+        }
+        else purePrice = "-";
+
         String aPrice = cachedRowSet.getString("A값");
         if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
             double amount = Double.parseDouble(aPrice);
@@ -768,28 +781,21 @@ public class Util {
         }
         else comp = "-";
 
-        String eDate = cachedRowSet.getString("개찰일시");
+        String eDate = cachedRowSet.getString("공고일자");
         if (eDate != null) {
             if (eDate.length() == 21) {
                 eDate = eDate.substring(2, 4) + eDate.substring(5, 7) + eDate.substring(8, 10) + " " + eDate.substring(11, 16);
             }
         }
 
-        String prog = cachedRowSet.getString("결과상태");
-        String annOrg = cachedRowSet.getString("지역");
-        String demOrg = cachedRowSet.getString("지역");
-        String bidType = "";
         String compType = cachedRowSet.getString("계약방법");
-        String priceMethod = "";
-        String hasPrice = cachedRowSet.getString("복수예가여부");
-        String hasRebid = cachedRowSet.getString("재입찰허용여부");
-        String hasElec = cachedRowSet.getString("전자입찰여부");
-        String hasCo = cachedRowSet.getString("공동수급가능여부");
-        String hasExpl = cachedRowSet.getString("현장설명실시여부");
-        String needCo = cachedRowSet.getString("공동수급의무여부");
+        String compType2 = cachedRowSet.getString("계약방법2");
+        String compType3 = cachedRowSet.getString("계약방법3");
+        String workType = cachedRowSet.getString("분류");
+        String area = cachedRowSet.getString("지역");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
-                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, hasPrice, hasRebid, hasElec, hasCo, hasExpl, needCo };
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, purePrice, aPrice, dPrice1, dPrice2,
+                comp, eDate, compType, compType2, compType3, workType, area };
     }
 
     public static Object[] getRailnetRow(CachedRowSet cachedRowSet, int index) throws SQLException {
