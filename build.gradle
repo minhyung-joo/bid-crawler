@@ -22,7 +22,7 @@ dependencies {
     implementation 'org.apache.poi:poi:4.1.1'
     implementation 'org.apache.commons:commons-lang3:3.9'
     implementation 'org.jsoup:jsoup:1.12.1'
-    implementation 'mysql:mysql-connector-java:8.0.21'
+    implementation 'mysql:mysql-connector-java:8.0.32'
     implementation 'org.apache.httpcomponents:httpclient:4.5'
 
     // https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java

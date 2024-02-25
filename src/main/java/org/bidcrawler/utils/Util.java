@@ -18,7 +18,7 @@ import java.util.Properties;
 public class Util {
     public static String[] COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법" };
     public static String[] DAPA_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "기초예가적용여부", "사전심사", "낙찰자결정방법", "입찰서제출마감일시", "낙찰하한율", "사정률" };
-    public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법", "재입찰", "선택가격1", "선택가격2", "선택가격3", "선택가격4", "기존예정가격", "분류", "업무" };
+    public static String[] LH_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "순공사원가", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "낙찰자선정방법", "분류", "업무" };
     public static String[] LETS_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "낙찰자선정방법" };
     public static String[] EX_COLUMNS = { "", "입찰공고번호", "개찰일시", "업종제한사항", "설계금액", "예정가격", "투찰금액", "순공사원가", "A값", "추첨가격1", "추첨가격15", "참가수", "공고일자", "계약방법1", "계약방법2", "계약방법3", "업력", "발주기관" };
     public static String[] RAILNET_COLUMNS = { "", "입찰공고번호", "실제개찰일시", "업종제한사항", "기초금액", "예정금액", "투찰금액", "A값", "추첨가격1", "추첨가격15", "참가수", "개찰일시(예정)", "진행상황", "공고기관", "수요기관", "입찰방식", "계약방식", "예가방법", "심사기준", "낙찰자선정방식", "낙찰하한율" };
@@ -530,6 +530,14 @@ public class Util {
         }
         else tPrice = "-";
 
+        String purePrice = cachedRowSet.getString("순공사원가");
+        if (purePrice != null && !purePrice.equals("") && !(purePrice.equals("0") || purePrice.equals("0.00"))) {
+            double amount = Double.parseDouble(purePrice);
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            purePrice = formatter.format(amount);
+        }
+        else purePrice = "-";
+
         String aPrice = cachedRowSet.getString("A값");
         if (aPrice != null && !aPrice.equals("") && !(aPrice.equals("0") || aPrice.equals("0.00"))) {
             double amount = Double.parseDouble(aPrice);
@@ -620,8 +628,8 @@ public class Util {
         String type = cachedRowSet.getString("분류");
         String work = cachedRowSet.getString("업무");
 
-        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, aPrice, dPrice1, dPrice2,
-                comp, eDate, prog, annOrg, demOrg, bidType, compType, priceMethod, choiceMethod, rebid, chosenPrice1, chosenPrice2, chosenPrice3, chosenPrice4, sitePrice, type, work };
+        return new Object[] { index, bidno, date, limit, bPrice, ePrice, tPrice, purePrice, aPrice, dPrice1, dPrice2,
+                comp, eDate, prog, annOrg, demOrg, bidType, compType, choiceMethod, type, work };
     }
 
     public static Object[] getLetsRow(CachedRowSet cachedRowSet, int index) throws SQLException {

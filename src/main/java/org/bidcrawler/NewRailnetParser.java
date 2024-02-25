@@ -58,7 +58,7 @@ public class NewRailnetParser extends Parser
         totalItems = 0;
         curItem = 0;
 
-        db_con = java.sql.DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", Util.DB_ID, Util.DB_PW);
+        db_con = java.sql.DriverManager.getConnection(Util.DB_URL, Util.DB_ID, Util.DB_PW);
         st = db_con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         rs = null;
     }

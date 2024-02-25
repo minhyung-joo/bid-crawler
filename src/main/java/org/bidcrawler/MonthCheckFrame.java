@@ -105,7 +105,7 @@ public class MonthCheckFrame extends CheckFrame {
                     try
                     {
                         timeFrames = queryByMonth(startDate, endDate);
-                        con = DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", Util.DB_ID, Util.DB_PW);
+                        con = DriverManager.getConnection(Util.DB_URL, Util.DB_ID, Util.DB_PW);
                         st = con.createStatement();
                         rs = null;
 

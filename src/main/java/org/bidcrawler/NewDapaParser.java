@@ -116,11 +116,11 @@ public class NewDapaParser extends Parser {
 
         // Set up SQL connection.
         db_con = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                Util.DB_URL,
                 Util.DB_ID,
                 Util.DB_PW
         );
-        st = db_con.createStatement();
+        st = db_con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         rs = null;
     }
 
@@ -1414,7 +1414,7 @@ public class NewDapaParser extends Parser {
         for (int i = 0; i < orgArray.length(); i++) {
             HashMap orgEntry = (HashMap) orgArray.getJSONObject(i).toMap();
             String result = (String) orgEntry.get("negnNote");
-            if (result.equals("낙찰")) {
+            if (result != null && result.equals("낙찰")) {
                 return orgEntry;
             }
         }

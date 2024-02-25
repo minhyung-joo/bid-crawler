@@ -61,8 +61,8 @@ public class NewLHParser
         this.frame = frame;
         this.checkFrame = checkFrame;
 
-        db_con = DriverManager.getConnection("jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8", Util.DB_ID, Util.DB_PW);
-        st = db_con.createStatement();
+        db_con = DriverManager.getConnection(Util.DB_URL, Util.DB_ID, Util.DB_PW);
+        st = db_con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         rs = null;
     }
 
@@ -160,22 +160,27 @@ public class NewLHParser
             }
             if (exists) {
                 System.out.println(bidNum + " exists.");
-                sql = "SELECT 공고, 공고현황 FROM lhbidinfo " + where;
-                rs = st.executeQuery(sql);
-                int finished = 0;
-                String dbProg = "";
-                if (rs.first()) {
-                    finished = rs.getInt(1);
-                    dbProg = rs.getString(2) == null ? "" : rs.getString(2);
-                }
+                if (info.get("분류").equals("정정공고")) {
+                    sql = "UPDATE lhbidinfo SET 분류=\"" + info.get("분류") + "\", 입찰마감일자=\"" + info.get("입찰마감일자") + "\", 공고현황=\"" + info.get("진행상태") + "\" " + where;
+                    System.out.println(sql);
+                    st.executeUpdate(sql);
+                } else {
+                    sql = "SELECT 공고, 공고현황 FROM lhbidinfo " + where;
+                    rs = st.executeQuery(sql);
+                    int finished = 0;
+                    String dbProg = "";
+                    if (rs.first()) {
+                        finished = rs.getInt(1);
+                        dbProg = rs.getString(2) == null ? "" : rs.getString(2);
+                    }
 
-                if (finished > 0) {
-                    if (dbProg.equals(info.get("진행상태"))) {
-                        enter = false;
-                    } else {
-                        sql = "UPDATE lhbidinfo SET 공고현황=\"" + (String)info.get("진행상태") + "\" " + where;
-                        st.executeUpdate(sql);
-
+                    if (finished > 0) {
+                        if (dbProg.equals(info.get("진행상태"))) {
+                            enter = false;
+                        } else {
+                            sql = "UPDATE lhbidinfo SET 공고현황=\"" + info.get("진행상태") + "\" " + where;
+                            st.executeUpdate(sql);
+                        }
                     }
                 }
             }
@@ -244,7 +249,7 @@ public class NewLHParser
                 else if (key.equals("개찰일시")) {
                     value = value + ":00";
                 }
-                else if (key.equals("기초금액") || key.equals("설계가격") || key.equals("가격점수제외금액(A)")) {
+                else if (key.equals("기초금액") || key.equals("설계가격") || key.equals("가격점수제외금액(A)") || key.equals("낙찰제외기준금액")) {
                     value = value.split(" ")[0];
                     value = value.replaceAll(",", "");
                     value = value.replaceAll("원", "");
@@ -267,6 +272,10 @@ public class NewLHParser
 
         if (info.containsKey("가격점수제외금액(A)")) {
             sql += "A값=" + info.get("가격점수제외금액(A)") + ", ";
+        }
+
+        if (info.containsKey("낙찰제외기준금액")) {
+            sql += "순공사원가=" + info.get("낙찰제외기준금액") + ", ";
         }
 
         sql = sql + "공고=1 " + where;

@@ -174,11 +174,11 @@ public class LetsParser extends Parser {
         if (db_con == null) {
             // Set up SQL connection.
             db_con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost/" + Util.SCHEMA + "?characterEncoding=utf8",
+                    Util.DB_URL,
                     Util.DB_ID,
                     Util.DB_PW
             );
-            st = db_con.createStatement();
+            st = db_con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             rs = null;
         }
 
