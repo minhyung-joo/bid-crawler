@@ -195,11 +195,13 @@ public class Util {
             smallestLB = -2.00;
             smallestUB = -1.70;
 
-            if (largestRatio >= largestUB || largestRatio <= largestLB) {
+            //if (largestRatio >= largestUB || largestRatio <= largestLB) {
+            if (largestRatio >= largestUB) {
                 System.out.println("invalid ratio " + ratios[14]);
                 valid = false;
             }
-            if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) {
+            //if (smallestRatio >= smallestUB || smallestRatio <= smallestLB) {
+            if (smallestRatio <= smallestLB) {
                 System.out.println("invalid ratio " + ratios[0]);
                 valid = false;
             }
